@@ -1,0 +1,91 @@
+name: Release
+
+# Fires on any pushed tag starting with `v` (e.g. v0.1.0-beta.1) and can
+# also be kicked off manually via the Actions tab. Builds the production web
+# bundle and a debug Android APK, and publishes them to the GitHub Release.
+#
+# The APK is a *debug* build — signed with Android's debug key, fine to
+# sideload for testing, not for the Play Store. A signed release APK needs a
+# keystore added as repo secrets; that's a later upgrade to this workflow.
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to publish (e.g. v0.1.0-beta.1)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build web bundle + debug APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web bundle
+        run: npm run build
+
+      - name: Setup JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: "temurin"
+          java-version: "21"
+          cache: "gradle"
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v4
+
+      - name: Sync Capacitor Android project
+        run: npx cap sync android
+
+      - name: Build debug APK
+        working-directory: android
+        run: |
+          chmod +x ./gradlew
+          ./gradlew assembleDebug
+
+      - name: Determine tag
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "tag=${{ github.event.inputs.tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Stage release artefacts
+        run: |
+          tag="${{ steps.tag.outputs.tag }}"
+          mkdir -p artefacts
+          cp android/app/build/outputs/apk/debug/app-debug.apk \
+             "artefacts/ndisc-view-${tag}-debug.apk"
+          (cd dist && zip -qr "../artefacts/ndisc-view-${tag}-web.zip" .)
+
+      # Publishes (or updates) the release with both artefacts. The
+      # `prerelease` flag is auto-set from the tag: anything with a hyphen
+      # (v0.1.0-beta.1) is a pre-release; plain vX.Y.Z is not.
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: ${{ steps.tag.outputs.tag }}
+          prerelease: ${{ contains(steps.tag.outputs.tag, '-') }}
+          generate_release_notes: true
+          files: |
+            artefacts/*.apk
+            artefacts/*.zip
