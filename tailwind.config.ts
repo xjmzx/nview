@@ -1,11 +1,13 @@
-/** @type {import('tailwindcss').Config} */
+import type { Config } from "tailwindcss";
 
 // Themeable palette — values come from CSS custom properties in src/index.css.
 // The channel-triple form keeps Tailwind's /opacity modifiers working
-// (e.g. bg-mauve/15 → rgb(var(--c-mauve) / 0.15)).
-const c = (v) => `rgb(var(${v}) / <alpha-value>)`;
+// (e.g. bg-mauve/15 → rgb(var(--c-mauve) / 0.15)). Mirrors the desktop
+// suite's tailwind.config.ts (ndisc / ndisc.blobtree / ndisc.smpl).
+const c = (v: string) => `rgb(var(${v}) / <alpha-value>)`;
 
 export default {
+  darkMode: ["class"],
   content: ["./index.html", "./src/**/*.{ts,tsx}"],
   theme: {
     extend: {
@@ -27,4 +29,4 @@ export default {
     },
   },
   plugins: [],
-};
+} satisfies Config;
