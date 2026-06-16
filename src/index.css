@@ -18,6 +18,33 @@
   --c-digital: 125 211 252;
 }
 
+/* release.v2 genre colours — theme-independent (no .theme-upleb override).
+   Reference via rgb(var(--c-g-<slug>) / <alpha>). Mirrors the glmps viewer. */
+:root {
+  --c-g-ambient: 176 199 209;
+  --c-g-classical-folk: 232 220 195;
+  --c-g-downtempo: 122 74 140;
+  --c-g-electronic: 140 140 140;
+  --c-g-experimental: 106 168 168;
+  --c-g-funk: 232 178 55;
+  --c-g-hip-hop: 158 104 66;
+  --c-g-jazz: 199 127 78;
+  --c-g-pop: 255 165 201;
+  --c-g-reggae: 90 138 79;
+  --c-g-rock: 176 57 46;
+  --c-g-soundtrack: 100 137 184;
+  --c-g-acid: 255 66 200;
+  --c-g-bass: 120 40 108;
+  --c-g-breaks: 230 77 168;
+  --c-g-dnb-jungle: 160 39 135;
+  --c-g-drone-noise: 159 110 145;
+  --c-g-dub: 199 93 163;
+  --c-g-electro: 255 111 184;
+  --c-g-footwork-trap: 255 133 200;
+  --c-g-house: 190 80 188;
+  --c-g-techno: 214 58 153;
+}
+
 .theme-upleb {
   --c-bg: 10 15 21;
   --c-surface: 22 32 45;

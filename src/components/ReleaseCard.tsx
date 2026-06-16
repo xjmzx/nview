@@ -1,4 +1,6 @@
 import { CoverArt } from "./CoverArt";
+import { StarRow } from "./StarRow";
+import { GenreDotChip } from "./GenreDotChip";
 import { useReactions } from "../hooks/useReactions";
 import { RELEASE_KIND } from "../config";
 import type { Release } from "../lib/nostr";
@@ -62,7 +64,7 @@ interface Props {
 export function ReleaseCard({ release, onSelect }: Props) {
   const { forAddr } = useReactions();
   const addr = `${RELEASE_KIND}:${release.pubkey}:${release.d}`;
-  const { up } = forAddr(addr);
+  const { up, down } = forAddr(addr);
 
   const meta = [release.year, release.formatGroup ?? release.format, release.label]
     .filter(Boolean)
@@ -86,6 +88,7 @@ export function ReleaseCard({ release, onSelect }: Props) {
           <p className="text-sm text-fg/75 truncate">{release.title}</p>
           <div className="flex items-center gap-1.5 mt-1">
             {release.medium && <MediumBadge medium={release.medium} />}
+            <GenreDotChip genres={release.genres} />
             {meta && (
               <span className="text-[11px] text-muted truncate">{meta}</span>
             )}
@@ -93,12 +96,15 @@ export function ReleaseCard({ release, onSelect }: Props) {
         </div>
         <div className="shrink-0 flex flex-col items-end justify-between py-0.5">
           <PublishMark createdAt={release.createdAt} />
-          {up > 0 && (
-            <span className="text-[11px] whitespace-nowrap">
-              <span className="text-mauve">♥</span>{" "}
-              <span className="text-muted tabular-nums">{up}</span>
-            </span>
-          )}
+          <div className="flex flex-col items-end gap-0.5">
+            <StarRow up={up} down={down} size="xs" />
+            {up > 0 && (
+              <span className="text-[11px] whitespace-nowrap">
+                <span className="text-mauve">♥</span>{" "}
+                <span className="text-muted tabular-nums">{up}</span>
+              </span>
+            )}
+          </div>
         </div>
       </button>
     </li>

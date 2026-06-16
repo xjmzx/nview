@@ -7,18 +7,23 @@ import {
 } from "react";
 import { Home, KeyRound, LogIn } from "lucide-react";
 import { decadeOf, matchesSearch, npubToHex, type Release } from "./lib/nostr";
+import { GENRE_ORDER, genreColor, genreLabel } from "./lib/genre";
 import { OWNER_NPUB } from "./config";
 import { useReleases } from "./hooks/useReleases";
 import { useProfile } from "./hooks/useProfile";
 import { useSigner } from "./hooks/useSigner";
 import { ReleaseCard } from "./components/ReleaseCard";
+import { ReleaseRow } from "./components/ReleaseRow";
 import { ReleaseDetail } from "./components/ReleaseDetail";
 import { FilterRow } from "./components/FilterRow";
+import { StatsSummary } from "./components/StatsSummary";
+import { ViewToggle, type ViewMode } from "./components/ViewToggle";
 import { LoginModal } from "./components/LoginModal";
 import { Footer } from "./components/Footer";
 
 type Theme = "fizx" | "upleb";
 const THEME_KEY = "ndisc-mobile.theme";
+const VIEW_KEY = "ndisc-mobile.view";
 
 // Returns a chip-toggle handler for one facet's Set state.
 function makeToggle(setter: Dispatch<SetStateAction<Set<string>>>) {
@@ -54,6 +59,23 @@ export default function App() {
   const [labelSel, setLabelSel] = useState<Set<string>>(new Set());
   const [countrySel, setCountrySel] = useState<Set<string>>(new Set());
   const [decadeSel, setDecadeSel] = useState<Set<string>>(new Set());
+  const [genreSel, setGenreSel] = useState<Set<string>>(new Set());
+
+  // Grid vs dense-list view — remembered across sessions.
+  const [view, setView] = useState<ViewMode>(() => {
+    try {
+      return localStorage.getItem(VIEW_KEY) === "list" ? "list" : "grid";
+    } catch {
+      return "grid";
+    }
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem(VIEW_KEY, view);
+    } catch {
+      /* ignore */
+    }
+  }, [view]);
 
   // Colour theme — toggled by tapping the ndisc title, mirrors the desktop.
   const [theme, setTheme] = useState<Theme>(() => {
@@ -77,6 +99,7 @@ export default function App() {
     const labelCount = new Map<string, number>();
     const countryCount = new Map<string, number>();
     const decades = new Set<string>();
+    const genres = new Set<string>();
     for (const r of releases) {
       if (r.label) {
         labelCount.set(r.label, (labelCount.get(r.label) ?? 0) + 1);
@@ -86,6 +109,7 @@ export default function App() {
       }
       const d = decadeOf(r.year);
       if (d) decades.add(d);
+      for (const g of r.genres) genres.add(g);
     }
     const byCountDesc = (a: [string, number], b: [string, number]) =>
       b[1] - a[1];
@@ -98,6 +122,8 @@ export default function App() {
         .map((e) => e[0]),
       countries: [...countryCount.entries()].sort(byCountDesc).map((e) => e[0]),
       decades: [...decades].sort((a, b) => decadeKey(a) - decadeKey(b)),
+      // Genre facet in canonical order, limited to slugs actually present.
+      genres: GENRE_ORDER.filter((g) => genres.has(g)) as string[],
     };
   }, [releases]);
 
@@ -118,16 +144,21 @@ export default function App() {
           const d = decadeOf(r.year);
           if (!d || !decadeSel.has(d)) return false;
         }
+        // Genre: any-slot match — release passes if any of its slots is picked.
+        if (genreSel.size > 0 && !r.genres.some((g) => genreSel.has(g))) {
+          return false;
+        }
         return true;
       }),
-    [releases, query, labelSel, countrySel, decadeSel],
+    [releases, query, labelSel, countrySel, decadeSel, genreSel],
   );
 
   const anyFilter =
     query.trim() !== "" ||
     labelSel.size > 0 ||
     countrySel.size > 0 ||
-    decadeSel.size > 0;
+    decadeSel.size > 0 ||
+    genreSel.size > 0;
 
   const ownerName =
     profile?.display_name || profile?.name || "discography";
@@ -137,6 +168,7 @@ export default function App() {
     setLabelSel(new Set());
     setCountrySel(new Set());
     setDecadeSel(new Set());
+    setGenreSel(new Set());
   }
 
   // Home — back to the list, search + facet filters cleared.
@@ -247,6 +279,7 @@ export default function App() {
             </p>
           ) : (
             <>
+              <StatsSummary releases={releases} className="mb-2 px-0.5" />
               <div className="flex flex-col gap-1.5 mb-3">
                 <FilterRow
                   name="label"
@@ -269,36 +302,66 @@ export default function App() {
                   selected={decadeSel}
                   onToggle={makeToggle(setDecadeSel)}
                 />
+                <FilterRow
+                  name="genre"
+                  index={3}
+                  options={facets.genres}
+                  selected={genreSel}
+                  onToggle={makeToggle(setGenreSel)}
+                  labelFor={genreLabel}
+                  dotColorFor={genreColor}
+                />
               </div>
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-[11px] text-muted tabular-nums">
-                  {filtered.length}
-                  {anyFilter ? ` of ${releases.length}` : ""} releases
-                </p>
-                {anyFilter && (
-                  <button
-                    type="button"
-                    onClick={clearFilters}
-                    className="text-[11px] text-accent"
-                  >
-                    clear
-                  </button>
-                )}
+              <div className="flex items-center justify-between gap-2 mb-2 min-h-[24px]">
+                <div className="flex items-center gap-2 min-w-0">
+                  {anyFilter && (
+                    <>
+                      <p className="text-[11px] text-muted tabular-nums shrink-0">
+                        {filtered.length} of {releases.length}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={clearFilters}
+                        className="text-[11px] text-accent shrink-0"
+                      >
+                        clear
+                      </button>
+                    </>
+                  )}
+                </div>
+                <ViewToggle value={view} onChange={setView} />
               </div>
-              <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                {filtered.map((r) => (
-                  <ReleaseCard
-                    key={r.d}
-                    release={r}
-                    onSelect={() => setSelected(r)}
-                  />
-                ))}
-                {filtered.length === 0 && (
-                  <li className="col-span-full text-muted text-sm py-8 text-center">
-                    no matches
-                  </li>
-                )}
-              </ul>
+              {view === "grid" ? (
+                <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                  {filtered.map((r) => (
+                    <ReleaseCard
+                      key={r.d}
+                      release={r}
+                      onSelect={() => setSelected(r)}
+                    />
+                  ))}
+                  {filtered.length === 0 && (
+                    <li className="col-span-full text-muted text-sm py-8 text-center">
+                      no matches
+                    </li>
+                  )}
+                </ul>
+              ) : (
+                <ul className="flex flex-col gap-1">
+                  {filtered.map((r) => (
+                    <ReleaseRow
+                      key={r.d}
+                      release={r}
+                      onSelect={() => setSelected(r)}
+                    />
+                  ))}
+                  {filtered.length === 0 && (
+                    <li className="text-muted text-sm py-8 text-center">
+                      no matches
+                    </li>
+                  )}
+                </ul>
+              )}
             </>
           )}
         </main>

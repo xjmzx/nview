@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Heart } from "lucide-react";
 import { CoverArt } from "./CoverArt";
+import { StarRow } from "./StarRow";
+import { GenreDotChip } from "./GenreDotChip";
 import { useReactions } from "../hooks/useReactions";
 import { RELEASE_KIND } from "../config";
 import { hostnameOf, type Release } from "../lib/nostr";
@@ -92,6 +94,10 @@ function MetaBar({ release }: { release: Release }) {
 // Detail body for one release. The app header is owned by App; this renders
 // only the scrolling content beneath it.
 export function ReleaseDetail({ release, onRequireLogin }: Props) {
+  const { forAddr } = useReactions();
+  const addr = `${RELEASE_KIND}:${release.pubkey}:${release.d}`;
+  const { up, down } = forAddr(addr);
+
   return (
     <main className="flex-1 w-full max-w-2xl mx-auto px-4 py-4">
       <CoverArt
@@ -104,6 +110,10 @@ export function ReleaseDetail({ release, onRequireLogin }: Props) {
         <div className="min-w-0">
           <h2 className="text-lg font-bold leading-tight">{release.artist}</h2>
           <p className="text-base text-fg/75">{release.title}</p>
+          <div className="flex items-center gap-2 mt-1.5">
+            <StarRow up={up} down={down} size="md" showWhenUnrated />
+            <GenreDotChip genres={release.genres} />
+          </div>
         </div>
         <ReactionButton release={release} onRequireLogin={onRequireLogin} />
       </div>

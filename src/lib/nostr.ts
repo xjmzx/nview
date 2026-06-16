@@ -3,6 +3,7 @@
 // exactly the same code. Canonical contract: ndisc schema/release.v1.json.
 import type { Event as NostrEvent } from "nostr-tools";
 import { nip19 } from "nostr-tools";
+import { type GenreSlug, normaliseGenres } from "./genre";
 
 export type Release = {
   id: string;
@@ -24,6 +25,8 @@ export type Release = {
   source?: string; // outbound http(s) URL: Discogs release, Bandcamp, label store, etc.
   externalIds: string[];
   tags: string[];
+  // release.v2 — ordered 0–3 genre slots (slot 0 = primary). Empty on v1.
+  genres: GenreSlug[];
   image?: string;
   notes: string;
   event: NostrEvent;
@@ -174,6 +177,7 @@ export function parseRelease(event: NostrEvent): Release | null {
     source: sourceUrlOf(getTag(event, "source")),
     externalIds: getAllTags(event, "i"),
     tags: getAllTags(event, "t"),
+    genres: normaliseGenres(getAllTags(event, "genre")),
     image: getTag(event, "image"),
     notes: event.content,
     event,

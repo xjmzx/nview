@@ -6,6 +6,10 @@ interface Props {
   options: string[];
   selected: Set<string>;
   onToggle: (value: string) => void;
+  // Optional: map a raw option value to its display label (default: identity).
+  labelFor?: (value: string) => string;
+  // Optional: a CSS colour for a leading dot on each chip (e.g. genre colours).
+  dotColorFor?: (value: string) => string;
 }
 
 // Width of the soft fade applied at a scrollable edge.
@@ -14,7 +18,15 @@ const EDGE = "18px";
 // One facet as a horizontally-scrolling row of toggle chips. `name` is the
 // screen-reader label only. Craft: a soft fade-mask hints at off-screen
 // chips, chips spring on toggle, and the row fades in (staggered by index).
-export function FilterRow({ name, index, options, selected, onToggle }: Props) {
+export function FilterRow({
+  name,
+  index,
+  options,
+  selected,
+  onToggle,
+  labelFor,
+  dotColorFor,
+}: Props) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [fade, setFade] = useState({ left: false, right: false });
 
@@ -73,7 +85,8 @@ export function FilterRow({ name, index, options, selected, onToggle }: Props) {
               transitionTimingFunction: "cubic-bezier(0.34, 1.56, 0.64, 1)",
             }}
             className={
-              "shrink-0 px-2.5 py-1 rounded-full text-xs whitespace-nowrap " +
+              "shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 " +
+              "rounded-full text-xs whitespace-nowrap " +
               "transition-[transform,background-color,color] duration-200 " +
               "active:scale-95 " +
               (on
@@ -81,7 +94,14 @@ export function FilterRow({ name, index, options, selected, onToggle }: Props) {
                 : "bg-surface text-fg/70 scale-100")
             }
           >
-            {value}
+            {dotColorFor && (
+              <span
+                className="w-2 h-2 rounded-full ring-1 ring-fg/10"
+                style={{ backgroundColor: dotColorFor(value) }}
+                aria-hidden="true"
+              />
+            )}
+            {labelFor ? labelFor(value) : value}
           </button>
         );
       })}
