@@ -5,7 +5,7 @@ import {
   type Dispatch,
   type SetStateAction,
 } from "react";
-import { Home, KeyRound, LogIn } from "lucide-react";
+import { Home, KeyRound, LogIn, Recycle } from "lucide-react";
 import { decadeOf, matchesSearch, npubToHex, type Release } from "./lib/nostr";
 import { GENRE_ORDER, genreColor, genreLabel } from "./lib/genre";
 import { OWNER_NPUB } from "./config";
@@ -15,8 +15,7 @@ import { useSigner } from "./hooks/useSigner";
 import { ReleaseCard } from "./components/ReleaseCard";
 import { ReleaseRow } from "./components/ReleaseRow";
 import { ReleaseDetail } from "./components/ReleaseDetail";
-import { CycleFilter, type CycleFacet } from "./components/CycleFilter";
-import { StatsSummary } from "./components/StatsSummary";
+import { useCycler, type CycleFacet } from "./hooks/useCycler";
 import { ViewToggle, type ViewMode } from "./components/ViewToggle";
 import { LoginModal } from "./components/LoginModal";
 import { Footer } from "./components/Footer";
@@ -175,6 +174,17 @@ export default function App() {
     },
   ];
 
+  const cyc = useCycler(facetDefs);
+
+  // Library-wide artist/label totals for the consolidated counts strip.
+  const libStats = useMemo(
+    () => ({
+      artists: new Set(releases.map((r) => r.artist).filter(Boolean)).size,
+      labels: new Set(releases.map((r) => r.label).filter(Boolean)).size,
+    }),
+    [releases],
+  );
+
   const filtered = useMemo(
     () =>
       releases.filter((r) => {
@@ -207,6 +217,13 @@ export default function App() {
     countrySel.size > 0 ||
     decadeSel.size > 0 ||
     genreSel.size > 0;
+
+  // When exactly one facet value is picked, name it in the counts strip
+  // (e.g. "118 Warp Records"); with several, just lead with the count.
+  const selectedAll = facetDefs.flatMap((f) =>
+    [...f.selected].map((v) => (f.labelFor ? f.labelFor(v) : v)),
+  );
+  const filterLabel = selectedAll.length === 1 ? selectedAll[0] : null;
 
   const ownerName =
     profile?.display_name || profile?.name || "discography";
@@ -299,70 +316,156 @@ export default function App() {
           >
             ‹ back
           </button>
-        ) : (
+        ) : releases.length > 0 ? (
           <div className="pb-3 flex flex-col gap-2">
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="search releases…"
-                spellCheck={false}
-                className="flex-1 min-w-0 px-3 py-2 rounded-lg bg-surface text-fg
-                           text-sm outline-none placeholder:text-muted"
-              />
-              <ViewToggle value={view} onChange={setView} />
-            </div>
-            {releases.length > 0 && (
-              <>
-                <CycleFilter facets={facetDefs} />
-                <div className="flex items-center justify-between gap-2">
-                  <StatsSummary releases={releases} />
-                  {anyFilter && (
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-[11px] text-muted tabular-nums">
-                        {filtered.length} of {releases.length}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={clearFilters}
-                        className="text-[11px] text-accent"
-                      >
-                        clear
-                      </button>
-                    </div>
-                  )}
-                </div>
-                {anyFilter && (
-                  <div className="flex flex-wrap gap-1">
-                    {facetDefs.flatMap((f) =>
-                      [...f.selected].map((v) => (
-                        <button
-                          key={`${f.key}:${v}`}
-                          type="button"
-                          onClick={() => f.onToggle(v)}
-                          title={`Remove ${f.name} filter`}
-                          className="inline-flex items-center gap-1 px-2 py-0.5
-                                     rounded-full bg-accent/15 text-accent text-[11px]"
-                        >
-                          {f.colorFor && (
-                            <span
-                              className="w-2 h-2 rounded-full"
-                              style={{ backgroundColor: f.colorFor(v) }}
-                              aria-hidden="true"
-                            />
-                          )}
-                          <span className="truncate max-w-[10rem]">
-                            {f.labelFor ? f.labelFor(v) : v}
-                          </span>
-                          <span aria-hidden="true">×</span>
-                        </button>
-                      )),
-                    )}
-                  </div>
+            <div className="flex items-stretch gap-2">
+              {/* Square, recycle-icon-only button: tap to cycle the active
+                  facet. Tall (spans search + pager) for an easy thumb press. */}
+              <button
+                type="button"
+                onClick={cyc.cycleFacet}
+                title={`Filter category: ${cyc.facet?.name ?? ""} — tap to change`}
+                aria-label={`Filter category: ${cyc.facet?.name ?? ""}. Tap to change.`}
+                className="relative shrink-0 self-stretch aspect-square grid place-items-center
+                           rounded-lg bg-surface text-muted hover:text-accent transition-colors"
+              >
+                <Recycle size={20} />
+                {cyc.facet && cyc.facet.selected.size > 0 && (
+                  <span
+                    className="absolute top-1 right-1 min-w-[14px] h-[14px] px-0.5 rounded-full
+                               bg-accent text-bg text-[9px] font-bold leading-[14px] text-center"
+                  >
+                    {cyc.facet.selected.size}
+                  </span>
                 )}
-              </>
-            )}
+              </button>
+              <div className="flex-1 min-w-0 flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="search releases…"
+                    spellCheck={false}
+                    className="flex-1 min-w-0 px-3 py-2 rounded-lg bg-surface text-fg
+                               text-sm outline-none placeholder:text-muted"
+                  />
+                  <ViewToggle value={view} onChange={setView} />
+                </div>
+                <div className="flex items-center gap-1 font-mono text-[11px]">
+                  <button
+                    type="button"
+                    onClick={() => cyc.step(-1)}
+                    disabled={cyc.n === 0}
+                    aria-label="Previous value"
+                    className="shrink-0 px-1.5 py-1 rounded text-muted hover:text-fg
+                               disabled:opacity-30 transition-colors"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    type="button"
+                    onClick={cyc.toggle}
+                    disabled={cyc.value == null}
+                    title={
+                      cyc.value != null
+                        ? cyc.on
+                          ? `Remove ${cyc.facet?.name} filter`
+                          : `Filter by ${cyc.value}`
+                        : undefined
+                    }
+                    className={
+                      "flex-1 min-w-0 inline-flex items-center justify-center gap-1.5 " +
+                      "px-2 py-1 rounded transition-colors " +
+                      (cyc.on ? "bg-accent text-bg font-medium" : "bg-surface text-fg/80")
+                    }
+                  >
+                    {cyc.value == null ? (
+                      <span className="text-muted">no {cyc.facet?.name}</span>
+                    ) : (
+                      <>
+                        {cyc.facet?.colorFor && (
+                          <span
+                            className="w-2 h-2 rounded-full ring-1 ring-fg/10 shrink-0"
+                            style={{ backgroundColor: cyc.facet.colorFor(cyc.value) }}
+                            aria-hidden="true"
+                          />
+                        )}
+                        <span className="truncate">
+                          {cyc.facet?.labelFor
+                            ? cyc.facet.labelFor(cyc.value)
+                            : cyc.value}
+                        </span>
+                        <span
+                          className={
+                            "tabular-nums shrink-0 " +
+                            (cyc.on ? "text-bg/70" : "text-muted")
+                          }
+                        >
+                          {cyc.count}
+                        </span>
+                      </>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => cyc.step(1)}
+                    disabled={cyc.n === 0}
+                    aria-label="Next value"
+                    className="shrink-0 px-1.5 py-1 rounded text-muted hover:text-fg
+                               disabled:opacity-30 transition-colors"
+                  >
+                    ›
+                  </button>
+                </div>
+              </div>
+            </div>
+            {/* Consolidated counts strip — leads with the filtered result. */}
+            <div className="flex items-center flex-wrap gap-x-2 gap-y-1 font-mono
+                            text-[11px] text-muted tabular-nums">
+              {anyFilter && (
+                <>
+                  <span className="text-accent">
+                    <span className="font-semibold">{filtered.length}</span>
+                    {filterLabel ? ` ${filterLabel}` : " filtered"}
+                  </span>
+                  <span className="text-muted/40">/</span>
+                </>
+              )}
+              <span>
+                <span className="text-fg/80 font-semibold">{releases.length}</span> releases
+              </span>
+              <span className="text-muted/40">/</span>
+              <span>
+                <span className="text-fg/80 font-semibold">{libStats.artists}</span> artists
+              </span>
+              <span className="text-muted/40">/</span>
+              <span>
+                <span className="text-fg/80 font-semibold">{libStats.labels}</span> labels
+              </span>
+              {anyFilter && (
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="text-accent ml-1"
+                >
+                  clear
+                </button>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="pb-3 flex items-center gap-2">
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="search releases…"
+              spellCheck={false}
+              className="flex-1 min-w-0 px-3 py-2 rounded-lg bg-surface text-fg
+                         text-sm outline-none placeholder:text-muted"
+            />
+            <ViewToggle value={view} onChange={setView} />
           </div>
         )}
       </header>
