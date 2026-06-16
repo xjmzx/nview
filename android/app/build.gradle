@@ -1,5 +1,21 @@
 apply plugin: 'com.android.application'
 
+// Release signing credentials. Resolved from either a local
+// `keystore.properties` at the repo root (developer machine, never committed)
+// or env vars (CI). When none are present the release signingConfig is left
+// unset, so `assembleDebug` and unsigned-release builds still work for anyone
+// without the keystore — only a real signed release needs them.
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+def releaseStoreFile = keystoreProperties['storeFile'] ?: System.getenv('NDISC_KEYSTORE_FILE')
+def releaseStorePassword = keystoreProperties['storePassword'] ?: System.getenv('NDISC_KEYSTORE_PASSWORD')
+def releaseKeyAlias = keystoreProperties['keyAlias'] ?: System.getenv('NDISC_KEY_ALIAS')
+def releaseKeyPassword = keystoreProperties['keyPassword'] ?: System.getenv('NDISC_KEY_PASSWORD')
+def hasReleaseSigning = releaseStoreFile && releaseStorePassword && releaseKeyAlias && releaseKeyPassword
+
 android {
     namespace = "uk.upleb.ndisc.mobile"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -7,8 +23,12 @@ android {
         applicationId "uk.upleb.ndisc.mobile"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "0.1.0-beta.1"
+        // Version is overridable from CI (-PndiscVersionCode / -PndiscVersionName)
+        // so the tag drives it and there's a single source of truth. Play
+        // requires versionCode to increase monotonically — CI passes the run
+        // number. Falls back to these literals for a plain local build.
+        versionCode project.hasProperty('ndiscVersionCode') ? project.ndiscVersionCode.toInteger() : 1
+        versionName project.hasProperty('ndiscVersionName') ? project.ndiscVersionName : "0.1.0-beta.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,8 +36,23 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        if (hasReleaseSigning) {
+            release {
+                storeFile file(releaseStoreFile)
+                storePassword releaseStorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+            }
+        }
+    }
     buildTypes {
         release {
+            // Only attach the signing config when credentials resolved; otherwise
+            // the release build stays unsigned rather than failing to configure.
+            if (hasReleaseSigning) {
+                signingConfig signingConfigs.release
+            }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
