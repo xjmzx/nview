@@ -73,36 +73,24 @@ export function getAllTags(event: NostrEvent, name: string): string[] {
     .filter((v): v is string => Boolean(v));
 }
 
-// Discogs descriptor tokens that mark a pressing as non-standard — colored
-// vinyl, limited/numbered, gatefold, flexi, white-label, etc.
-const FORMAT_SPECIAL_TOKENS = new Set([
-  "ltd", "num", "gat", "flexi", "minialbum", "w/lbl", "s/sided", "pic", "pin",
-  "etch", "shape", "cle", "whi", "blu", "gre", "grn", "yel", "red", "ora",
-  "pur", "pnk", "mar", "gld", "sil", "tri", "smo", "spl", "col",
-]);
-
-// Canonical display order for the collapsed `format` facet.
 export const FORMAT_GROUP_ORDER = [
   '7"',
-  '7" Colored/Limited',
   '10"',
   '12"',
-  '12" Colored/Limited',
-  '12" Reissue',
-  '12" Promo',
-  '2x12"',
-  "3x+ LP",
   "Vinyl Box-set",
   "CD",
   "Cassette",
-  "Lossless (FLAC/AIFF)",
-  "MP3 320",
-  "MP3 (Lossy)",
+  "Lossless",
+  "MP3",
 ];
 
 /**
- * Collapse a raw Discogs format descriptor into one of the canonical buckets
- * in FORMAT_GROUP_ORDER. Returns undefined for an empty/unrecognized input.
+ * Collapse a raw Discogs format descriptor (`12", EP, Ltd, Num, Cle`) into
+ * one of the eight display buckets in FORMAT_GROUP_ORDER. Returns undefined
+ * for an empty/unrecognized descriptor so it drops out of the facet
+ * entirely. Pressing-variant qualifiers (colored, limited, promo, reissue,
+ * multi-disc) all fold into the size bucket — this is a display-layer
+ * sieve, not a re-tagging of the underlying release.
  */
 export function formatGroup(raw: string | undefined): string | undefined {
   if (!raw) return undefined;
@@ -110,12 +98,11 @@ export function formatGroup(raw: string | undefined): string | undefined {
   if (!s) return undefined;
   const lower = s.toLowerCase();
 
-  if (/\b(?:flac|aiff|wav)\b/.test(lower)) return "Lossless (FLAC/AIFF)";
-  if (/\bmp3\b/.test(lower)) {
-    const kbps = lower.match(/mp3\s+(\d+)/);
-    return kbps && Number(kbps[1]) >= 320 ? "MP3 320" : "MP3 (Lossy)";
-  }
+  // Digital — keyed off the codec name, not the medium tag.
+  if (/\b(?:flac|aiff|wav)\b/.test(lower)) return "Lossless";
+  if (/\bmp3\b/.test(lower)) return "MP3";
 
+  // Physical — split the descriptor into whole tokens.
   const tokens = s
     .split(/[,+]/)
     .map((t) => t.trim().toLowerCase())
@@ -127,26 +114,20 @@ export function formatGroup(raw: string | undefined): string | undefined {
   if (has("cass")) return "Cassette";
   if (has("cd")) return "CD";
 
-  let mult = 0;
+  // Multi-disc folds into the base size bucket; `lp` is a 12" alias.
   for (const t of tokens) {
-    const m = t.match(/^(\d+)x(?:12"|lp|10"|7")$/);
-    if (m) mult = Math.max(mult, Number(m[1]));
-    else if (t === '12"' || t === "lp" || t === '10"' || t === '7"')
-      mult = Math.max(mult, 1);
+    const m = t.match(/^(\d+)x(12"|lp|10"|7")$/);
+    if (m) {
+      const size = m[2];
+      if (size === '7"') return '7"';
+      if (size === '10"') return '10"';
+      return '12"';
+    }
   }
-  if (mult >= 3) return "3x+ LP";
-  if (mult === 2) return '2x12"';
 
-  const special = tokens.some((t) => FORMAT_SPECIAL_TOKENS.has(t));
-
-  if (has('7"')) return special ? '7" Colored/Limited' : '7"';
+  if (has('7"')) return '7"';
   if (has('10"')) return '10"';
-  if (has('12"') || has("lp")) {
-    if (has("promo")) return '12" Promo';
-    if (has("re")) return '12" Reissue';
-    if (special) return '12" Colored/Limited';
-    return '12"';
-  }
+  if (has('12"') || has("lp")) return '12"';
 
   return undefined;
 }
