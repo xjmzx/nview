@@ -14,6 +14,7 @@ import { useSigner } from "./hooks/useSigner";
 import { ReleaseCard } from "./components/ReleaseCard";
 import { ReleaseRow } from "./components/ReleaseRow";
 import { ReleaseDetail } from "./components/ReleaseDetail";
+import { StatsBreakdown } from "./components/StatsBreakdown";
 import { useCycler, type CycleFacet } from "./hooks/useCycler";
 import { ViewToggle, type ViewMode } from "./components/ViewToggle";
 import { LoginModal } from "./components/LoginModal";
@@ -49,6 +50,7 @@ export default function App() {
   const { status, logout } = useSigner();
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Release | null>(null);
+  const [showStats, setShowStats] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
 
   // Facet filters — a Set of selected values each; chips OR within a facet,
@@ -255,15 +257,23 @@ export default function App() {
             <span className="font-normal text-muted"> view</span>
           </button>
           <div className="flex items-center gap-2 min-w-0">
-            {/* Placeholder stats button — sourced from ndisc's LineChart
-                toolbar button. Not yet wired to a stats view. */}
+            {/* Stats toggle — minimal discography breakdown (genre/decade/
+                format). Sourced from ndisc's LineChart toolbar button. */}
             <button
               type="button"
-              onClick={() => {}}
-              title="Stats"
-              aria-label="Stats"
-              className="shrink-0 p-2 rounded-md bg-mauve/15 text-mauve
-                         hover:bg-mauve hover:text-bg transition-colors"
+              onClick={() => {
+                setSelected(null);
+                setShowStats((s) => !s);
+              }}
+              title={showStats ? "Back to releases" : "Discography stats"}
+              aria-label={showStats ? "Back to releases" : "Discography stats"}
+              aria-pressed={showStats}
+              className={
+                "shrink-0 p-2 rounded-md transition-colors " +
+                (showStats
+                  ? "bg-mauve text-bg"
+                  : "bg-mauve/15 text-mauve hover:bg-mauve hover:text-bg")
+              }
             >
               <LineChart size={16} />
             </button>
@@ -305,8 +315,8 @@ export default function App() {
           </div>
         </div>
         {/* Contextual row beneath the bar — search in list view, back in
-            detail view. */}
-        {selected ? (
+            detail view. Hidden in the stats view. */}
+        {showStats ? null : selected ? (
           <button
             type="button"
             onClick={() => setSelected(null)}
@@ -437,6 +447,46 @@ export default function App() {
           release={selected}
           onRequireLogin={() => setLoginOpen(true)}
         />
+      ) : showStats ? (
+        <main className="flex-1 px-4 py-3">
+          <div className="mb-3 flex items-baseline justify-between gap-4">
+            <h2 className="font-mono text-sm text-fg">
+              discography <span className="text-muted">/ stats</span>
+            </h2>
+            <button
+              type="button"
+              onClick={() => setShowStats(false)}
+              className="font-mono text-[11px] text-accent shrink-0"
+            >
+              ‹ back
+            </button>
+          </div>
+          <div className="mb-6 flex flex-wrap gap-x-3 gap-y-1 font-mono text-[11px] text-muted tabular-nums">
+            <span>
+              <span className="text-fg/80 font-semibold">
+                {releases.length}
+              </span>{" "}
+              releases
+            </span>
+            <span>
+              <span className="text-fg/80 font-semibold">
+                {libStats.artists}
+              </span>{" "}
+              artists
+            </span>
+            <span>
+              <span className="text-fg/80 font-semibold">
+                {libStats.labels}
+              </span>{" "}
+              labels
+            </span>
+          </div>
+          {loading && releases.length === 0 ? (
+            <p className="text-muted text-sm py-12 text-center">loading…</p>
+          ) : (
+            <StatsBreakdown releases={releases} />
+          )}
+        </main>
       ) : (
         <main className="flex-1 px-4 py-3">
           {loading && releases.length === 0 ? (
