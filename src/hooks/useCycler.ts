@@ -35,9 +35,29 @@ export function useCycler(facets: CycleFacet[]) {
       next[fi] = (idxs[fi] ?? 0) + dir;
       return next;
     });
+  // "Play next filter": advance the value cursor within the current facet and,
+  // when it runs off the end, reset to the top value and move to the next
+  // facet. Lets a single button walk every (facet, value) candidate.
+  const cycleNext = () => {
+    const cur = idxs[fi] ?? 0;
+    if (cur + 1 < n) {
+      setIdxs((prev) => {
+        const next = [...prev];
+        next[fi] = cur + 1;
+        return next;
+      });
+    } else {
+      setIdxs((prev) => {
+        const next = [...prev];
+        next[fi] = 0;
+        return next;
+      });
+      setFacetIdx((i) => (i + 1) % Math.max(1, len));
+    }
+  };
   const toggle = () => {
     if (value != null && facet) facet.onToggle(value);
   };
 
-  return { facet, value, on, count, n, cycleFacet, step, toggle };
+  return { facet, value, on, count, n, cycleFacet, step, cycleNext, toggle };
 }

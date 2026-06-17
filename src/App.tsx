@@ -5,12 +5,11 @@ import {
   type Dispatch,
   type SetStateAction,
 } from "react";
-import { Home, KeyRound, LogIn, Recycle } from "lucide-react";
+import { Home, KeyRound, LineChart, LogIn, RotateCw } from "lucide-react";
 import { decadeOf, matchesSearch, npubToHex, type Release } from "./lib/nostr";
 import { GENRE_ORDER, genreColor, genreLabel } from "./lib/genre";
 import { OWNER_NPUB } from "./config";
 import { useReleases } from "./hooks/useReleases";
-import { useProfile } from "./hooks/useProfile";
 import { useSigner } from "./hooks/useSigner";
 import { ReleaseCard } from "./components/ReleaseCard";
 import { ReleaseRow } from "./components/ReleaseRow";
@@ -47,7 +46,6 @@ export default function App() {
   }, []);
 
   const { releases, loading } = useReleases(hex);
-  const profile = useProfile(hex);
   const { status, logout } = useSigner();
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Release | null>(null);
@@ -218,16 +216,6 @@ export default function App() {
     decadeSel.size > 0 ||
     genreSel.size > 0;
 
-  // When exactly one facet value is picked, name it in the counts strip
-  // (e.g. "118 Warp Records"); with several, just lead with the count.
-  const selectedAll = facetDefs.flatMap((f) =>
-    [...f.selected].map((v) => (f.labelFor ? f.labelFor(v) : v)),
-  );
-  const filterLabel = selectedAll.length === 1 ? selectedAll[0] : null;
-
-  const ownerName =
-    profile?.display_name || profile?.name || "discography";
-
   function clearFilters() {
     setQuery("");
     setLabelSel(new Set());
@@ -267,7 +255,18 @@ export default function App() {
             <span className="font-normal text-muted"> view</span>
           </button>
           <div className="flex items-center gap-2 min-w-0">
-            <span className="text-xs text-muted truncate">{ownerName}</span>
+            {/* Placeholder stats button — sourced from ndisc's LineChart
+                toolbar button. Not yet wired to a stats view. */}
+            <button
+              type="button"
+              onClick={() => {}}
+              title="Stats"
+              aria-label="Stats"
+              className="shrink-0 p-2 rounded-md bg-mauve/15 text-mauve
+                         hover:bg-mauve hover:text-bg transition-colors"
+            >
+              <LineChart size={16} />
+            </button>
             {status === "in" ? (
               <button
                 type="button"
@@ -318,18 +317,21 @@ export default function App() {
           </button>
         ) : releases.length > 0 ? (
           <div className="pb-3 flex flex-col gap-2">
+            {/* Row 1 — refresh ("play next filter"), search, view toggle. */}
             <div className="flex items-stretch gap-2">
-              {/* Square, recycle-icon-only button: tap to cycle the active
-                  facet. Tall (spans search + pager) for an easy thumb press. */}
               <button
                 type="button"
-                onClick={cyc.cycleFacet}
-                title={`Filter category: ${cyc.facet?.name ?? ""} — tap to change`}
-                aria-label={`Filter category: ${cyc.facet?.name ?? ""}. Tap to change.`}
-                className="relative shrink-0 self-stretch aspect-square grid place-items-center
+                onClick={cyc.cycleNext}
+                title={
+                  cyc.value != null
+                    ? `Next filter — currently ${cyc.facet?.name}: ${cyc.value}`
+                    : "Next filter"
+                }
+                aria-label="Next filter"
+                className="relative shrink-0 self-stretch w-[44px] grid place-items-center
                            rounded-lg bg-surface text-muted hover:text-accent transition-colors"
               >
-                <Recycle size={20} />
+                <RotateCw size={20} />
                 {cyc.facet && cyc.facet.selected.size > 0 && (
                   <span
                     className="absolute top-1 right-1 min-w-[14px] h-[14px] px-0.5 rounded-full
@@ -339,107 +341,67 @@ export default function App() {
                   </span>
                 )}
               </button>
-              <div className="flex-1 min-w-0 flex flex-col gap-2">
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder="search releases…"
-                    spellCheck={false}
-                    className="flex-1 min-w-0 px-3 py-2 rounded-lg bg-surface text-fg
-                               text-sm outline-none placeholder:text-muted"
-                  />
-                  <ViewToggle value={view} onChange={setView} />
-                </div>
-                <div className="flex items-center gap-1 font-mono text-[11px]">
-                  <button
-                    type="button"
-                    onClick={() => cyc.step(-1)}
-                    disabled={cyc.n === 0}
-                    aria-label="Previous value"
-                    className="shrink-0 px-1.5 py-1 rounded text-muted hover:text-fg
-                               disabled:opacity-30 transition-colors"
-                  >
-                    ‹
-                  </button>
-                  <button
-                    type="button"
-                    onClick={cyc.toggle}
-                    disabled={cyc.value == null}
-                    title={
-                      cyc.value != null
-                        ? cyc.on
-                          ? `Remove ${cyc.facet?.name} filter`
-                          : `Filter by ${cyc.value}`
-                        : undefined
-                    }
-                    className={
-                      "flex-1 min-w-0 inline-flex items-center justify-center gap-1.5 " +
-                      "px-2 py-1 rounded transition-colors " +
-                      (cyc.on ? "bg-accent text-bg font-medium" : "bg-surface text-fg/80")
-                    }
-                  >
-                    {cyc.value == null ? (
-                      <span className="text-muted">no {cyc.facet?.name}</span>
-                    ) : (
-                      <>
-                        {cyc.facet?.colorFor && (
-                          <span
-                            className="w-2 h-2 rounded-full ring-1 ring-fg/10 shrink-0"
-                            style={{ backgroundColor: cyc.facet.colorFor(cyc.value) }}
-                            aria-hidden="true"
-                          />
-                        )}
-                        <span className="truncate">
-                          {cyc.facet?.labelFor
-                            ? cyc.facet.labelFor(cyc.value)
-                            : cyc.value}
-                        </span>
-                        <span
-                          className={
-                            "tabular-nums shrink-0 " +
-                            (cyc.on ? "text-bg/70" : "text-muted")
-                          }
-                        >
-                          {cyc.count}
-                        </span>
-                      </>
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => cyc.step(1)}
-                    disabled={cyc.n === 0}
-                    aria-label="Next value"
-                    className="shrink-0 px-1.5 py-1 rounded text-muted hover:text-fg
-                               disabled:opacity-30 transition-colors"
-                  >
-                    ›
-                  </button>
-                </div>
-              </div>
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="search releases…"
+                spellCheck={false}
+                className="flex-1 min-w-0 px-3 py-2 rounded-lg bg-surface text-fg
+                           text-sm outline-none placeholder:text-muted"
+              />
+              <ViewToggle value={view} onChange={setView} className="self-stretch" />
             </div>
-            {/* Consolidated counts strip — leads with the filtered result. */}
-            <div className="flex items-center flex-wrap gap-x-2 gap-y-1 font-mono
-                            text-[11px] text-muted tabular-nums">
-              {anyFilter && (
-                <>
-                  <span className="text-accent">
-                    <span className="font-semibold">{filtered.length}</span>
-                    {filterLabel ? ` ${filterLabel}` : " filtered"}
-                  </span>
-                  <span className="text-muted/40">/</span>
-                </>
-              )}
+            {/* Row 2 — discography + filter stats only. The leading chip is the
+                current filter candidate; tap it to apply / remove (the refresh
+                button above steps through candidates). */}
+            <div className="flex items-center flex-wrap gap-x-1.5 gap-y-1 font-mono
+                            text-[10px] text-muted tabular-nums">
+              <button
+                type="button"
+                onClick={cyc.toggle}
+                disabled={cyc.value == null}
+                title={
+                  cyc.value != null
+                    ? cyc.on
+                      ? `Remove ${cyc.facet?.name} filter`
+                      : `Filter by ${cyc.value}`
+                    : undefined
+                }
+                className={
+                  "inline-flex items-center gap-1 rounded px-1.5 py-0.5 transition-colors " +
+                  (cyc.on
+                    ? "bg-accent text-bg font-medium"
+                    : "text-fg/80 hover:text-fg")
+                }
+              >
+                {cyc.value == null ? (
+                  <span className="text-muted">no {cyc.facet?.name}</span>
+                ) : (
+                  <>
+                    {cyc.facet?.colorFor && (
+                      <span
+                        className="w-2 h-2 rounded-full ring-1 ring-fg/10 shrink-0"
+                        style={{ backgroundColor: cyc.facet.colorFor(cyc.value) }}
+                        aria-hidden="true"
+                      />
+                    )}
+                    <span className="font-semibold tabular-nums">{cyc.count}</span>
+                    <span>
+                      {cyc.facet?.labelFor
+                        ? cyc.facet.labelFor(cyc.value)
+                        : cyc.value}
+                    </span>
+                  </>
+                )}
+              </button>
+              <span className="text-muted/40">/</span>
               <span>
                 <span className="text-fg/80 font-semibold">{releases.length}</span> releases
               </span>
-              <span className="text-muted/40">/</span>
               <span>
                 <span className="text-fg/80 font-semibold">{libStats.artists}</span> artists
               </span>
-              <span className="text-muted/40">/</span>
               <span>
                 <span className="text-fg/80 font-semibold">{libStats.labels}</span> labels
               </span>
