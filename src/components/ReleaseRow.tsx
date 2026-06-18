@@ -18,7 +18,12 @@ export function ReleaseRow({ release, onSelect }: Props) {
   const addr = `${RELEASE_KIND}:${release.pubkey}:${release.d}`;
   const { up, down } = forAddr(addr);
 
-  const meta = [release.year, release.formatGroup ?? release.format, release.label]
+  const meta = [
+    release.year,
+    release.formatGroup ?? release.format,
+    release.tracks ? `${release.tracks} tracks` : undefined,
+    release.label,
+  ]
     .filter(Boolean)
     .join(" · ");
 

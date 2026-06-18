@@ -81,6 +81,7 @@ function MetaBar({ release }: { release: Release }) {
         <MetaCell label="year" value={release.year} />
         <MetaCell label="medium" value={release.medium} />
         <MetaCell label="format" value={release.format} />
+        <MetaCell label="tracks" value={release.tracks?.toString()} />
       </dl>
       <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-2 gap-y-1 text-xs">
         <MetaCell label="label" value={release.label} />

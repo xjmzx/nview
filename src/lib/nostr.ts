@@ -16,6 +16,7 @@ export type Release = {
   format?: string; // raw Discogs descriptor, e.g. `12", EP, Ltd, Num, Cle`
   formatGroup?: string; // collapsed bucket from FORMAT_GROUP_ORDER
   year?: string;
+  tracks?: number; // release.v2 additive — expected total tracks for the release
   label?: string;
   catalog?: string;
   country?: string;
@@ -149,6 +150,13 @@ export function parseRelease(event: NostrEvent): Release | null {
     format: getTag(event, "format"),
     formatGroup: formatGroup(getTag(event, "format")),
     year: getTag(event, "year"),
+    // release.v2 additive: expected total tracks (integer-as-string on the
+    // wire). Strict-but-recoverable — a non-positive/garbage value drops out.
+    tracks: ((): number | undefined => {
+      const t = getTag(event, "tracks");
+      const n = t ? parseInt(t, 10) : NaN;
+      return Number.isFinite(n) && n > 0 ? n : undefined;
+    })(),
     label: getTag(event, "label"),
     catalog: getTag(event, "catalog"),
     country: getTag(event, "country"),
