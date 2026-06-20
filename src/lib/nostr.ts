@@ -17,6 +17,7 @@ export type Release = {
   formatGroup?: string; // collapsed bucket from FORMAT_GROUP_ORDER
   year?: string;
   tracks?: number; // release.v2 additive — expected total tracks for the release
+  discs?: number; // release.v2 additive — total disc count (Discogs-derived); surfaced only when > 1
   label?: string;
   catalog?: string;
   country?: string;
@@ -154,6 +155,16 @@ export function parseRelease(event: NostrEvent): Release | null {
     // wire). Strict-but-recoverable — a non-positive/garbage value drops out.
     tracks: ((): number | undefined => {
       const t = getTag(event, "tracks");
+      const n = t ? parseInt(t, 10) : NaN;
+      return Number.isFinite(n) && n > 0 ? n : undefined;
+    })(),
+    // release.v2 additive: total disc count (integer-as-string on the wire).
+    // Derived ndisc-side from the release's Discogs format breakdown (2x LP →
+    // 2), so it is present only on enriched releases. Strict-but-recoverable —
+    // a non-positive/garbage value drops out. ndisc emits it when > 0; the UI
+    // surfaces it only for genuine multi-disc releases (> 1).
+    discs: ((): number | undefined => {
+      const t = getTag(event, "discs");
       const n = t ? parseInt(t, 10) : NaN;
       return Number.isFinite(n) && n > 0 ? n : undefined;
     })(),

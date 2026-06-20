@@ -91,6 +91,12 @@ function MetaBar({ release }: { release: Release }) {
         <MetaCell label="label" value={release.label} />
         <MetaCell label="country" value={release.country} />
         <MetaCell label="category" value={release.category} />
+        <MetaCell
+          label="discs"
+          value={
+            release.discs && release.discs > 1 ? String(release.discs) : undefined
+          }
+        />
       </dl>
     </div>
   );
