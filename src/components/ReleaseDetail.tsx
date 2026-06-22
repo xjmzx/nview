@@ -7,6 +7,7 @@ import { LeafDots } from "./LeafDots";
 import { useReactions } from "../hooks/useReactions";
 import { RELEASE_KIND } from "../config";
 import { hostnameOf, type Release } from "../lib/nostr";
+import { sourcePlatform } from "../lib/source";
 
 interface Props {
   release: Release;
@@ -131,16 +132,20 @@ export function ReleaseDetail({ release, onRequireLogin }: Props) {
 
       <MetaBar release={release} />
 
-      {release.source && (
-        <a
-          href={release.source}
-          target="_blank"
-          rel="noreferrer"
-          className="mt-3 inline-block text-sm text-accent underline break-all"
-        >
-          {hostnameOf(release.source) ?? release.source}
-        </a>
-      )}
+      {release.source && (() => {
+        const platform = sourcePlatform(release);
+        return (
+          <a
+            href={release.source}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-3 inline-block text-sm text-accent underline break-all"
+            style={platform ? { color: platform.color } : undefined}
+          >
+            {platform?.label ?? hostnameOf(release.source) ?? release.source}
+          </a>
+        );
+      })()}
 
       {release.notes && (
         <p className="mt-4 text-sm text-fg/80 whitespace-pre-wrap">

@@ -1,6 +1,7 @@
 import { CoverArt } from "./CoverArt";
 import { StarRow } from "./StarRow";
 import { GenreDotChip } from "./GenreDotChip";
+import { SourceDot } from "./SourceDot";
 import { useReactions } from "../hooks/useReactions";
 import { RELEASE_KIND } from "../config";
 import type { Release } from "../lib/nostr";
@@ -94,6 +95,7 @@ export function ReleaseCard({ release, onSelect }: Props) {
           <p className="text-sm text-fg/75 truncate">{release.title}</p>
           <div className="flex items-center gap-1.5 mt-1">
             {release.medium && <MediumBadge medium={release.medium} />}
+            <SourceDot release={release} />
             <GenreDotChip genres={release.genres} />
             {meta && (
               <span className="text-[11px] text-muted truncate">{meta}</span>

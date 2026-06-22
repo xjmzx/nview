@@ -1,6 +1,7 @@
 import { CoverArt } from "./CoverArt";
 import { StarRow } from "./StarRow";
 import { GenreDotChip } from "./GenreDotChip";
+import { SourceDot } from "./SourceDot";
 import { useReactions } from "../hooks/useReactions";
 import { RELEASE_KIND } from "../config";
 import type { Release } from "../lib/nostr";
@@ -46,6 +47,7 @@ export function ReleaseRow({ release, onSelect }: Props) {
           <span className="text-sm text-fg/55"> — {release.title}</span>
         </span>
         <GenreDotChip genres={release.genres} />
+        <SourceDot release={release} />
         <StarRow up={up} down={down} size="xs" className="shrink-0" />
         {up > 0 && (
           <span className="shrink-0 text-[11px] whitespace-nowrap">
