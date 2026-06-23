@@ -10,9 +10,9 @@ import {
   KeyRound,
   ListMusic,
   LogIn,
+  Radio,
   RotateCw,
   Settings,
-  Sparkles,
 } from "lucide-react";
 import { decadeOf, matchesSearch, npubToHex, type Release } from "./lib/nostr";
 import { GENRE_ORDER, genreColor, genreLabel } from "./lib/genre";
@@ -29,7 +29,7 @@ import { LoginModal } from "./components/LoginModal";
 import { Footer } from "./components/Footer";
 import { Onboarding } from "./components/Onboarding";
 import { RelaySettings } from "./components/RelaySettings";
-import { FeedView } from "./components/FeedView";
+import { CurrentView } from "./components/CurrentView";
 import { useRelays } from "./hooks/useRelays";
 import { useFeed } from "./hooks/useFeed";
 
@@ -37,12 +37,13 @@ type Theme = "fizx" | "upleb";
 const THEME_KEY = "ndisc-mobile.theme";
 const VIEW_KEY = "ndisc-mobile.view";
 
-// Top-level views, switched from the header's three-button control.
-type Tab = "discography" | "stats" | "feed";
+// Top-level views, switched from the header's three-button control. `current`
+// is the curated feed-note channel (matches ndisc's `current` view).
+type Tab = "discography" | "stats" | "current";
 const TABS: { key: Tab; Icon: typeof ListMusic; label: string }[] = [
   { key: "discography", Icon: ListMusic, label: "Discography" },
   { key: "stats", Icon: BarChart3, label: "Stats" },
-  { key: "feed", Icon: Sparkles, label: "Curated feed" },
+  { key: "current", Icon: Radio, label: "Current" },
 ];
 
 // Returns a chip-toggle handler for one facet's Set state.
@@ -517,8 +518,8 @@ export default function App() {
             <StatsBreakdown releases={releases} />
           )}
         </main>
-      ) : tab === "feed" ? (
-        <FeedView
+      ) : tab === "current" ? (
+        <CurrentView
           notes={feedNotes}
           loading={feedLoading}
           releases={releases}
