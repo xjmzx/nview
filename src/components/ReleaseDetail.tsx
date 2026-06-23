@@ -110,6 +110,15 @@ export function ReleaseDetail({ release, onRequireLogin }: Props) {
   const addr = `${RELEASE_KIND}:${release.pubkey}:${release.d}`;
   const { up, down } = forAddr(addr);
 
+  // Drop the bare "discogs.com" source link when a Discogs external-id pill
+  // already covers it — keep the canonical pill, lose the redundant link.
+  const hasDiscogsId = release.externalIds.some(
+    (i) => externalRef(i)?.kind === "discogs",
+  );
+  const showSource =
+    !!release.source &&
+    !(hostnameOf(release.source) === "discogs.com" && hasDiscogsId);
+
   return (
     <main className="flex-1 w-full max-w-2xl mx-auto px-4 py-4">
       <CoverArt
@@ -132,7 +141,7 @@ export function ReleaseDetail({ release, onRequireLogin }: Props) {
 
       <MetaBar release={release} />
 
-      {release.source && (() => {
+      {showSource && (() => {
         const platform = sourcePlatform(release);
         return (
           <a
@@ -148,7 +157,7 @@ export function ReleaseDetail({ release, onRequireLogin }: Props) {
       })()}
 
       {release.externalIds.length > 0 && (
-        <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1">
+        <div className="mt-3 flex flex-wrap gap-2">
           {release.externalIds.map((i) => {
             const ref = externalRef(i);
             return ref ? (
@@ -157,11 +166,18 @@ export function ReleaseDetail({ release, onRequireLogin }: Props) {
                 href={ref.url}
                 target="_blank"
                 rel="noreferrer"
-                className="text-sm text-accent underline"
+                className="inline-flex items-center gap-1 rounded-md bg-white/10 hover:bg-white/[0.16] px-2 py-1 text-[11px] font-mono text-white/75 hover:text-white transition-colors"
               >
                 {ref.label} ↗
               </a>
-            ) : null;
+            ) : (
+              <span
+                key={i}
+                className="inline-flex items-center rounded-md bg-white/[0.06] px-2 py-1 text-[11px] font-mono text-white/45"
+              >
+                {i}
+              </span>
+            );
           })}
         </div>
       )}
