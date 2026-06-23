@@ -1,14 +1,14 @@
-import { DEFAULT_RELAYS, OWNER_NPUB } from "../config";
+import { OWNER_NPUB } from "../config";
+import { useRelays } from "../hooks/useRelays";
 
 // Mirrors the desktop ndisc footer — what-it-is / whose-data / where-from —
 // as a left-aligned, padded band that wraps cleanly on a narrow screen.
-const relayHosts = DEFAULT_RELAYS.map((r) =>
-  r.replace(/^wss?:\/\//, ""),
-).join(" · ");
-
 const ownerShort = `${OWNER_NPUB.slice(0, 12)}…${OWNER_NPUB.slice(-6)}`;
 
 export function Footer() {
+  const { relays } = useRelays();
+  const relayHosts = relays.map((r) => r.replace(/^wss?:\/\//, "")).join(" · ");
+
   return (
     <footer
       className="mt-8 border-t border-surface bg-surface/40 px-4 pt-3

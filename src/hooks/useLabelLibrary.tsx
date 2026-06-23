@@ -5,7 +5,8 @@ import {
   parseLabelLibrary,
   type LabelLibrary,
 } from "../lib/nostr";
-import { DEFAULT_RELAYS, LABEL_LIBRARY_D, LABEL_LIBRARY_KIND } from "../config";
+import { LABEL_LIBRARY_D, LABEL_LIBRARY_KIND } from "../config";
+import { useRelays } from "./useRelays";
 
 /**
  * Owner-published record-label image library (kind:31238, schema labels.v1).
@@ -17,6 +18,7 @@ import { DEFAULT_RELAYS, LABEL_LIBRARY_D, LABEL_LIBRARY_KIND } from "../config";
  * graceful fallback when a label has no entry.
  */
 export function useLabelLibrary(hexPubkey: string | undefined) {
+  const { relays } = useRelays();
   const [library, setLibrary] = useState<LabelLibrary | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -29,7 +31,6 @@ export function useLabelLibrary(hexPubkey: string | undefined) {
     setLoading(true);
 
     const pool = new SimplePool();
-    const relays = [...DEFAULT_RELAYS];
     let latest: NostrEvent | undefined;
 
     const sub = pool.subscribeMany(
@@ -60,7 +61,7 @@ export function useLabelLibrary(hexPubkey: string | undefined) {
       sub.close();
       pool.close(relays);
     };
-  }, [hexPubkey]);
+  }, [hexPubkey, relays]);
 
   return { library, loading };
 }

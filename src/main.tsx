@@ -4,13 +4,16 @@ import "./index.css";
 import App from "./App.tsx";
 import { SignerProvider } from "./hooks/useSigner.tsx";
 import { ReactionsProvider } from "./hooks/useReactions.tsx";
+import { RelaysProvider } from "./hooks/useRelays.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <SignerProvider>
-      <ReactionsProvider>
-        <App />
-      </ReactionsProvider>
-    </SignerProvider>
+    <RelaysProvider>
+      <SignerProvider>
+        <ReactionsProvider>
+          <App />
+        </ReactionsProvider>
+      </SignerProvider>
+    </RelaysProvider>
   </StrictMode>,
 );

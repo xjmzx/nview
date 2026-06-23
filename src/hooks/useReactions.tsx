@@ -9,10 +9,11 @@ import {
   type ReactNode,
 } from "react";
 import { SimplePool, type Event as NostrEvent } from "nostr-tools";
-import { DEFAULT_RELAYS, OWNER_NPUB, RELEASE_KIND } from "../config";
+import { OWNER_NPUB, RELEASE_KIND } from "../config";
 import { npubToHex } from "../lib/nostr";
 import { classifyReaction, REACTION_UP } from "../lib/rating";
 import { useSigner } from "./useSigner";
+import { useRelays } from "./useRelays";
 
 // Per-release reaction aggregate. `mine` is the current user's own reaction
 // event id (for revoke), or null.
@@ -47,7 +48,7 @@ export function ReactionsProvider({ children }: { children: ReactNode }) {
   // Pool persists for the provider's life — reused for sub + publish.
   const poolRef = useRef<SimplePool | null>(null);
   if (!poolRef.current) poolRef.current = new SimplePool();
-  const relays = useMemo(() => [...DEFAULT_RELAYS], []);
+  const { relays } = useRelays();
 
   // `myPubkey` via ref so the stable aggregator can see the current identity.
   const myPubkeyRef = useRef<string | null>(myPubkey);

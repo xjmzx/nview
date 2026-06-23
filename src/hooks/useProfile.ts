@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { SimplePool, type Event as NostrEvent } from "nostr-tools";
 import { parseProfile, type Profile } from "../lib/nostr";
-import { DEFAULT_RELAYS } from "../config";
+import { useRelays } from "./useRelays";
 
 // Fetches one author's kind:0 metadata (name / nip05 / picture). Read-only.
 export function useProfile(hexPubkey: string | undefined) {
+  const { relays } = useRelays();
   const [profile, setProfile] = useState<Profile | null>(null);
 
   useEffect(() => {
@@ -12,7 +13,6 @@ export function useProfile(hexPubkey: string | undefined) {
     setProfile(null);
 
     const pool = new SimplePool();
-    const relays = [...DEFAULT_RELAYS];
     let latest: NostrEvent | undefined;
 
     const sub = pool.subscribeMany(
@@ -32,7 +32,7 @@ export function useProfile(hexPubkey: string | undefined) {
       sub.close();
       pool.close(relays);
     };
-  }, [hexPubkey]);
+  }, [hexPubkey, relays]);
 
   return profile;
 }

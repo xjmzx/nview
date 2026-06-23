@@ -6,7 +6,8 @@ import {
   parseRelease,
   type Release,
 } from "../lib/nostr";
-import { DEFAULT_RELAYS, RELEASE_KIND } from "../config";
+import { RELEASE_KIND } from "../config";
+import { useRelays } from "./useRelays";
 
 type State = {
   releases: Release[];
@@ -17,6 +18,7 @@ type State = {
 // Subscribes to one author's kind:31237 release events plus their kind:5
 // deletions, deduped (NIP-01 replaceable) and tombstoned client-side.
 export function useReleases(hexPubkey: string | undefined) {
+  const { relays } = useRelays();
   const [state, setState] = useState<State>({
     releases: [],
     loading: true,
@@ -39,7 +41,6 @@ export function useReleases(hexPubkey: string | undefined) {
     setState({ releases: [], loading: true, eose: false });
 
     const pool = new SimplePool();
-    const relays = [...DEFAULT_RELAYS];
 
     // Cold launches frequently miss the first handshake to the data-heavy
     // relay. nostr-tools counts an errored/closed relay as EOSE, so the
@@ -163,7 +164,7 @@ export function useReleases(hexPubkey: string | undefined) {
       deletesSub.close();
       pool.close(relays);
     };
-  }, [hexPubkey]);
+  }, [hexPubkey, relays]);
 
   return useMemo(
     () => ({

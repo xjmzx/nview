@@ -5,7 +5,14 @@ import {
   type Dispatch,
   type SetStateAction,
 } from "react";
-import { Home, KeyRound, LineChart, LogIn, RotateCw } from "lucide-react";
+import {
+  Home,
+  KeyRound,
+  LineChart,
+  LogIn,
+  RotateCw,
+  Settings,
+} from "lucide-react";
 import { decadeOf, matchesSearch, npubToHex, type Release } from "./lib/nostr";
 import { GENRE_ORDER, genreColor, genreLabel } from "./lib/genre";
 import { OWNER_NPUB } from "./config";
@@ -19,6 +26,9 @@ import { useCycler, type CycleFacet } from "./hooks/useCycler";
 import { ViewToggle, type ViewMode } from "./components/ViewToggle";
 import { LoginModal } from "./components/LoginModal";
 import { Footer } from "./components/Footer";
+import { Onboarding } from "./components/Onboarding";
+import { RelaySettings } from "./components/RelaySettings";
+import { useRelays } from "./hooks/useRelays";
 
 type Theme = "fizx" | "upleb";
 const THEME_KEY = "ndisc-mobile.theme";
@@ -46,12 +56,14 @@ export default function App() {
     }
   }, []);
 
+  const { onboarded } = useRelays();
   const { releases, loading } = useReleases(hex);
   const { status, logout } = useSigner();
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Release | null>(null);
   const [showStats, setShowStats] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   // Facet filters — a Set of selected values each; chips OR within a facet,
   // facets AND together (and with the search).
@@ -232,6 +244,11 @@ export default function App() {
     clearFilters();
   }
 
+  // First run — choose relays before the discography loads.
+  if (!onboarded) {
+    return <Onboarding />;
+  }
+
   return (
     <div
       className="min-h-screen w-full max-w-md md:max-w-3xl lg:max-w-5xl mx-auto
@@ -302,6 +319,16 @@ export default function App() {
                 <LogIn size={16} />
               </button>
             )}
+            <button
+              type="button"
+              onClick={() => setSettingsOpen(true)}
+              title="Relay settings"
+              aria-label="Relay settings"
+              className="shrink-0 p-2 rounded-md bg-mauve/15 text-mauve
+                         hover:bg-mauve hover:text-bg transition-colors"
+            >
+              <Settings size={16} />
+            </button>
             <button
               type="button"
               onClick={goHome}
@@ -531,6 +558,9 @@ export default function App() {
 
       <Footer />
       <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
+      {settingsOpen && (
+        <RelaySettings onClose={() => setSettingsOpen(false)} />
+      )}
     </div>
   );
 }
