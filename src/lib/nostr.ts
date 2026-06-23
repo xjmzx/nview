@@ -68,6 +68,30 @@ export function hostnameOf(url: string): string | null {
   }
 }
 
+export type ExternalRef = { kind: string; label: string; url: string };
+
+// Map a release `i` external-id (e.g. "discogs:release:12345" or
+// "musicbrainz:release:<uuid>") to a labelled outbound link, or null when the
+// scheme isn't recognised so the caller can fall back to the raw string.
+export function externalRef(id: string): ExternalRef | null {
+  const m = id.match(/^(discogs|musicbrainz):release:(.+)$/i);
+  if (!m) return null;
+  const kind = m[1].toLowerCase();
+  const ref = m[2].trim();
+  if (!ref) return null;
+  return kind === "discogs"
+    ? {
+        kind,
+        label: "Discogs",
+        url: `https://www.discogs.com/release/${encodeURIComponent(ref)}`,
+      }
+    : {
+        kind,
+        label: "MusicBrainz",
+        url: `https://musicbrainz.org/release/${encodeURIComponent(ref)}`,
+      };
+}
+
 export function getAllTags(event: NostrEvent, name: string): string[] {
   return event.tags
     .filter((t) => t[0] === name)

@@ -6,7 +6,7 @@ import { GenreDotChip } from "./GenreDotChip";
 import { LeafDots } from "./LeafDots";
 import { useReactions } from "../hooks/useReactions";
 import { RELEASE_KIND } from "../config";
-import { hostnameOf, type Release } from "../lib/nostr";
+import { externalRef, hostnameOf, type Release } from "../lib/nostr";
 import { sourcePlatform } from "../lib/source";
 
 interface Props {
@@ -146,6 +146,25 @@ export function ReleaseDetail({ release, onRequireLogin }: Props) {
           </a>
         );
       })()}
+
+      {release.externalIds.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1">
+          {release.externalIds.map((i) => {
+            const ref = externalRef(i);
+            return ref ? (
+              <a
+                key={i}
+                href={ref.url}
+                target="_blank"
+                rel="noreferrer"
+                className="text-sm text-accent underline"
+              >
+                {ref.label} ↗
+              </a>
+            ) : null;
+          })}
+        </div>
+      )}
 
       {release.notes && (
         <p className="mt-4 text-sm text-fg/80 whitespace-pre-wrap">
