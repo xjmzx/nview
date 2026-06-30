@@ -283,8 +283,7 @@ export default function App() {
             className="text-xl font-bold tracking-tight leading-none
                        transition-opacity hover:opacity-70"
           >
-            n<span className="text-accent">disc</span>
-            <span className="font-normal text-muted"> view</span>
+            n<span className="text-accent">view</span>
           </button>
           <div className="flex items-center gap-2 min-w-0">
             {/* Three-view switcher: discography / stats / curated feed. */}

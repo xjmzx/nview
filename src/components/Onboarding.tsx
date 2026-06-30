@@ -34,8 +34,7 @@ export function Onboarding() {
               <Radio size={18} />
             </span>
             <h1 className="text-xl font-bold tracking-tight">
-              n<span className="text-accent">disc</span>
-              <span className="font-normal text-muted"> view</span>
+              n<span className="text-accent">view</span>
             </h1>
           </div>
           <p className="text-sm text-muted leading-relaxed">

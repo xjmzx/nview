@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">ndisc</string>
-    <string name="title_activity_main">ndisc</string>
+    <string name="app_name">nview</string>
+    <string name="title_activity_main">nview</string>
     <string name="package_name">uk.upleb.ndisc.mobile</string>
     <string name="custom_url_scheme">uk.upleb.ndisc.mobile</string>
 </resources>

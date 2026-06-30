@@ -16,8 +16,7 @@ export function Footer() {
                  text-[11px] leading-relaxed text-muted"
     >
       <p className="font-semibold tracking-tight text-fg/80">
-        n<span className="text-accent">disc</span>
-        <span className="font-normal text-muted"> view</span>
+        n<span className="text-accent">view</span>
       </p>
       <p className="mt-1">
         <span className="text-muted">viewing </span>
