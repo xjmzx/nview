@@ -27,8 +27,8 @@ android {
         // so the tag drives it and there's a single source of truth. Play
         // requires versionCode to increase monotonically — CI passes the run
         // number. Falls back to these literals for a plain local build.
-        versionCode project.hasProperty('ndiscVersionCode') ? project.ndiscVersionCode.toInteger() : 1
-        versionName project.hasProperty('ndiscVersionName') ? project.ndiscVersionName : "0.1.0-beta.2"
+        versionCode project.hasProperty('ndiscVersionCode') ? project.ndiscVersionCode.toInteger() : 2
+        versionName project.hasProperty('ndiscVersionName') ? project.ndiscVersionName : "0.1.0-beta.6"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
