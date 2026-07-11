@@ -77,12 +77,17 @@ export function useReleases(hexPubkey: string | undefined) {
       return deletedAt !== undefined && ev.created_at <= deletedAt;
     };
 
+    // Coalescing window (ms). Collapses the storm of onevent callbacks into a
+    // handful of recomputes per second. setTimeout (not rAF) so it still fires
+    // while the webview is hidden — rAF pauses when the document isn't visible,
+    // which would leave the catalogue unrendered on a backgrounded load.
+    const FLUSH_MS = 120;
     let flushScheduled = false;
-    let rafId: number | null = null;
+    let flushTimer: ReturnType<typeof setTimeout> | null = null;
 
     const flush = () => {
       flushScheduled = false;
-      rafId = null;
+      flushTimer = null;
       const releases: Release[] = [];
       for (const [d, ev] of latestRef.current) {
         if (isDeleted(ev)) continue;
@@ -107,7 +112,7 @@ export function useReleases(hexPubkey: string | undefined) {
     const scheduleFlush = () => {
       if (flushScheduled) return;
       flushScheduled = true;
-      rafId = requestAnimationFrame(flush);
+      flushTimer = setTimeout(flush, FLUSH_MS);
     };
 
     const openReleases = () => {
@@ -191,7 +196,7 @@ export function useReleases(hexPubkey: string | undefined) {
     return () => {
       cancelled = true;
       clearTimeout(retryTimer);
-      if (rafId !== null) cancelAnimationFrame(rafId);
+      if (flushTimer !== null) clearTimeout(flushTimer);
       document.removeEventListener("visibilitychange", onVisible);
       releasesSub?.close();
       deletesSub.close();
