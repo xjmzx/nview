@@ -21,6 +21,7 @@ import { OWNER_NPUB } from "./config";
 import { useReleases } from "./hooks/useReleases";
 import { useSigner } from "./hooks/useSigner";
 import { ReleaseCard } from "./components/ReleaseCard";
+import { CoverTile } from "./components/CoverTile";
 import { DotMatrixLoader } from "./components/DotMatrixLoader";
 import { ReleaseRow } from "./components/ReleaseRow";
 import { ReleaseDetail } from "./components/ReleaseDetail";
@@ -94,7 +95,9 @@ export default function App() {
   // Grid vs dense-list view — remembered across sessions.
   const [view, setView] = useState<ViewMode>(() => {
     try {
-      return localStorage.getItem(VIEW_KEY) === "list" ? "list" : "grid";
+      const v = localStorage.getItem(VIEW_KEY);
+      if (v === "list" || v === "covers" || v === "grid") return v;
+      return "grid";
     } catch {
       return "grid";
     }
@@ -589,6 +592,21 @@ export default function App() {
             <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
               {paged.map((r) => (
                 <ReleaseCard
+                  key={r.d}
+                  release={r}
+                  onSelect={() => setSelected(r)}
+                />
+              ))}
+              {filtered.length === 0 && (
+                <li className="col-span-full text-muted text-sm py-8 text-center">
+                  no matches
+                </li>
+              )}
+            </ul>
+          ) : view === "covers" ? (
+            <ul className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+              {paged.map((r) => (
+                <CoverTile
                   key={r.d}
                   release={r}
                   onSelect={() => setSelected(r)}

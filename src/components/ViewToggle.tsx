@@ -1,4 +1,4 @@
-export type ViewMode = "grid" | "list";
+export type ViewMode = "grid" | "covers" | "list";
 
 type Props = {
   value: ViewMode;
@@ -6,8 +6,9 @@ type Props = {
   className?: string;
 };
 
-// Compact grid/list switch. Mirrors the glmps ViewToggle (trimmed to two
-// modes for mobile). `list` is a denser single-line layout, handy on a phone.
+// Compact grid/covers/list switch. Mirrors the glmps ViewToggle. `grid` is the
+// cover-thumb + text card; `covers` is the image-only cover wall (glmps
+// `grid-xs`); `list` is a denser single-line layout, handy on a phone.
 export function ViewToggle({ value, onChange, className = "" }: Props) {
   return (
     <div
@@ -22,6 +23,19 @@ export function ViewToggle({ value, onChange, className = "" }: Props) {
           <rect x="7" y="1" width="4" height="4" rx="0.5" />
           <rect x="1" y="7" width="4" height="4" rx="0.5" />
           <rect x="7" y="7" width="4" height="4" rx="0.5" />
+        </svg>
+      </Btn>
+      <Btn active={value === "covers"} onClick={() => onChange("covers")} label="cover wall">
+        <svg className="w-3.5 h-3.5" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
+          <rect x="0.5" y="0.5" width="3" height="3" rx="0.3" />
+          <rect x="4.5" y="0.5" width="3" height="3" rx="0.3" />
+          <rect x="8.5" y="0.5" width="3" height="3" rx="0.3" />
+          <rect x="0.5" y="4.5" width="3" height="3" rx="0.3" />
+          <rect x="4.5" y="4.5" width="3" height="3" rx="0.3" />
+          <rect x="8.5" y="4.5" width="3" height="3" rx="0.3" />
+          <rect x="0.5" y="8.5" width="3" height="3" rx="0.3" />
+          <rect x="4.5" y="8.5" width="3" height="3" rx="0.3" />
+          <rect x="8.5" y="8.5" width="3" height="3" rx="0.3" />
         </svg>
       </Btn>
       <Btn active={value === "list"} onClick={() => onChange("list")} label="list view">
