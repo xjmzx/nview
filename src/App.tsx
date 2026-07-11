@@ -1,6 +1,7 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
   type Dispatch,
   type SetStateAction,
@@ -20,6 +21,7 @@ import { OWNER_NPUB } from "./config";
 import { useReleases } from "./hooks/useReleases";
 import { useSigner } from "./hooks/useSigner";
 import { ReleaseCard } from "./components/ReleaseCard";
+import { DotMatrixLoader } from "./components/DotMatrixLoader";
 import { ReleaseRow } from "./components/ReleaseRow";
 import { ReleaseDetail } from "./components/ReleaseDetail";
 import { StatsBreakdown } from "./components/StatsBreakdown";
@@ -36,6 +38,7 @@ import { useFeed } from "./hooks/useFeed";
 type Theme = "fizx" | "upleb";
 const THEME_KEY = "ndisc-mobile.theme";
 const VIEW_KEY = "ndisc-mobile.view";
+const PAGE_SIZE = 60;
 
 // Top-level views, switched from the header's three-button control. `current`
 // is the curated feed-note channel (matches ndisc's `current` view).
@@ -84,6 +87,9 @@ export default function App() {
   const [countrySel, setCountrySel] = useState<Set<string>>(new Set());
   const [decadeSel, setDecadeSel] = useState<Set<string>>(new Set());
   const [genreSel, setGenreSel] = useState<Set<string>>(new Set());
+
+  // Infinite-scroll window size for the discography list.
+  const [shown, setShown] = useState(PAGE_SIZE);
 
   // Grid vs dense-list view — remembered across sessions.
   const [view, setView] = useState<ViewMode>(() => {
@@ -235,6 +241,49 @@ export default function App() {
       }),
     [releases, query, labelSel, countrySel, decadeSel, genreSel],
   );
+
+  // Infinite scroll: window the filtered list and auto-advance as a sentinel
+  // below the grid nears the viewport — no click needed. Mirrors the glmps
+  // viewer; a brief reveal beat keeps the loader visible on the fast local set.
+  const paged = useMemo(() => filtered.slice(0, shown), [filtered, shown]);
+  const hasMore = filtered.length > paged.length;
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const [advancing, setAdvancing] = useState(false);
+
+  // Reset the window when a FILTER changes (a narrower filter starts at the
+  // top). Not keyed on releases.length: while the feed streams in, every batch
+  // would otherwise reset to 60 and fight the auto-advance. A shrinking set is
+  // handled by the slice above (paged shortens; hasMore goes false).
+  useEffect(() => {
+    setShown(PAGE_SIZE);
+  }, [query, labelSel, countrySel, decadeSel, genreSel]);
+
+  useEffect(() => {
+    if (tab !== "discography" || !hasMore) return;
+    const el = sentinelRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) setAdvancing(true);
+      },
+      { rootMargin: "200px 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+    // Re-key on paged.length so the observer re-evaluates after each advance:
+    // observe() emits an immediate callback for the current state, so if the
+    // sentinel is still visible it keeps filling, and stops once it isn't —
+    // avoids the "sentinel stays in view, no transition, load stalls" trap.
+  }, [tab, hasMore, view, paged.length]);
+
+  useEffect(() => {
+    if (!advancing) return;
+    const t = setTimeout(() => {
+      setShown((s) => Math.min(s + PAGE_SIZE, filtered.length));
+      setAdvancing(false);
+    }, 250);
+    return () => clearTimeout(t);
+  }, [advancing, filtered.length]);
 
   const anyFilter =
     query.trim() !== "" ||
@@ -512,7 +561,9 @@ export default function App() {
             </span>
           </div>
           {loading && releases.length === 0 ? (
-            <p className="text-muted text-sm py-12 text-center">loading…</p>
+            <div className="flex justify-center py-12">
+              <DotMatrixLoader label="Loading releases" />
+            </div>
           ) : (
             <StatsBreakdown releases={releases} />
           )}
@@ -527,14 +578,16 @@ export default function App() {
       ) : (
         <main className="flex-1 px-4 py-3">
           {loading && releases.length === 0 ? (
-            <p className="text-muted text-sm py-12 text-center">loading…</p>
+            <div className="flex justify-center py-12">
+              <DotMatrixLoader label="Loading releases" />
+            </div>
           ) : releases.length === 0 ? (
             <p className="text-muted text-sm py-12 text-center">
               no releases found
             </p>
           ) : view === "grid" ? (
             <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-              {filtered.map((r) => (
+              {paged.map((r) => (
                 <ReleaseCard
                   key={r.d}
                   release={r}
@@ -549,7 +602,7 @@ export default function App() {
             </ul>
           ) : (
             <ul className="flex flex-col gap-1">
-              {filtered.map((r) => (
+              {paged.map((r) => (
                 <ReleaseRow
                   key={r.d}
                   release={r}
@@ -562,6 +615,31 @@ export default function App() {
                 </li>
               )}
             </ul>
+          )}
+
+          {/* Infinite-scroll sentinel + loader. Sits below the list; when it
+              nears the viewport the window advances by PAGE_SIZE. */}
+          {hasMore && (
+            <div
+              ref={sentinelRef}
+              className="mt-4 flex flex-col items-center gap-2 py-4"
+            >
+              <DotMatrixLoader />
+              <span className="font-mono text-[10px] text-muted tabular-nums">
+                {paged.length.toLocaleString()} /{" "}
+                {filtered.length.toLocaleString()}
+              </span>
+            </div>
+          )}
+
+          {/* End marker — reached the true end of the filtered set. */}
+          {!hasMore && paged.length > 0 && (
+            <div className="mt-4 flex justify-center py-4">
+              <span className="font-mono text-[10px] text-muted tabular-nums">
+                that’s everything · {filtered.length.toLocaleString()}{" "}
+                {filtered.length === 1 ? "release" : "releases"}
+              </span>
+            </div>
           )}
         </main>
       )}
