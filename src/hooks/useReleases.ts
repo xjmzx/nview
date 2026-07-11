@@ -27,17 +27,25 @@ export function useReleases(hexPubkey: string | undefined) {
 
   // Latest event per d-tag (NIP-01 replaceable dedupe).
   const latestRef = useRef<Map<string, NostrEvent>>(new Map());
-  // NIP-09 deletion state — `e`-tag deletes a specific event id, `a`-tag
-  // deletes a coordinate `kind:pubkey:d`. ndisc / this viewer treat an `a`
-  // deletion as a permanent tombstone regardless of timestamp.
+  // NIP-09 deletion state. `e`-tag deletes name a specific event id
+  // (content-addressed), so they are permanent: that exact event is dead.
   const deletedIdsRef = useRef<Set<string>>(new Set());
-  const deletedAddrsRef = useRef<Set<string>>(new Set());
+  // `a`-tag deletes name a coordinate `kind:pubkey:d`, which is REUSED every
+  // time the release is republished. So keep the newest deletion timestamp per
+  // coordinate and kill only events created at or before it — strict NIP-09.
+  //
+  // This used to treat an `a` delete as a permanent tombstone, which is wrong
+  // the moment a release is unpublished and later published again: the new
+  // event carries the same coordinate and was dropped on sight. After a bulk
+  // unpublish/republish cycle every coordinate has a deletion in its history,
+  // so the viewer hid the entire catalogue.
+  const deletedAddrsRef = useRef<Map<string, number>>(new Map());
 
   useEffect(() => {
     if (!hexPubkey) return;
     latestRef.current = new Map();
     deletedIdsRef.current = new Set();
-    deletedAddrsRef.current = new Set();
+    deletedAddrsRef.current = new Map();
     setState({ releases: [], loading: true, eose: false });
 
     const pool = new SimplePool();
@@ -59,9 +67,11 @@ export function useReleases(hexPubkey: string | undefined) {
       return `${ev.kind}:${ev.pubkey}:${d}`;
     };
 
-    const isDeleted = (ev: NostrEvent) =>
-      deletedIdsRef.current.has(ev.id) ||
-      deletedAddrsRef.current.has(coordOf(ev));
+    const isDeleted = (ev: NostrEvent) => {
+      if (deletedIdsRef.current.has(ev.id)) return true;
+      const deletedAt = deletedAddrsRef.current.get(coordOf(ev));
+      return deletedAt !== undefined && ev.created_at <= deletedAt;
+    };
 
     const recompute = () => {
       const releases: Release[] = [];
@@ -125,13 +135,12 @@ export function useReleases(hexPubkey: string | undefined) {
             if (t[0] === "e" && t[1] && !deletedIdsRef.current.has(t[1])) {
               deletedIdsRef.current.add(t[1]);
               touched = true;
-            } else if (
-              t[0] === "a" &&
-              t[1] &&
-              !deletedAddrsRef.current.has(t[1])
-            ) {
-              deletedAddrsRef.current.add(t[1]);
-              touched = true;
+            } else if (t[0] === "a" && t[1]) {
+              const prev = deletedAddrsRef.current.get(t[1]);
+              if (prev === undefined || ev.created_at > prev) {
+                deletedAddrsRef.current.set(t[1], ev.created_at);
+                touched = true;
+              }
             }
           }
           if (touched) recompute();
