@@ -72,6 +72,7 @@ export function ReleaseCard({ release, onSelect }: Props) {
     release.formatGroup ?? release.format,
     release.tracks ? `${release.tracks} tracks` : undefined,
     release.discs && release.discs > 1 ? `${release.discs} discs` : undefined,
+    release.video ? "video" : undefined,
     release.label,
   ]
     .filter(Boolean)

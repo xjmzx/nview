@@ -18,6 +18,7 @@ export type Release = {
   year?: string;
   tracks?: number; // release.v2 additive — expected total tracks for the release
   discs?: number; // release.v2 additive — total disc count (Discogs-derived); surfaced only when > 1
+  video?: number; // release.v2 additive — count of A/V files; presence is the signal (surfaced when ≥ 1)
   label?: string;
   catalog?: string;
   country?: string;
@@ -184,6 +185,15 @@ export function parseRelease(event: NostrEvent): Release | null {
     // surfaces it only for genuine multi-disc releases (> 1).
     discs: ((): number | undefined => {
       const t = getTag(event, "discs");
+      const n = t ? parseInt(t, 10) : NaN;
+      return Number.isFinite(n) && n > 0 ? n : undefined;
+    })(),
+    // release.v2 additive: count of audio-visual files (integer-as-string on
+    // the wire). Extension-detected ndisc-side and may over-count, so treat
+    // presence as the signal rather than the exact number. ndisc emits it only
+    // when > 0; strict-but-recoverable — garbage drops out.
+    video: ((): number | undefined => {
+      const t = getTag(event, "video");
       const n = t ? parseInt(t, 10) : NaN;
       return Number.isFinite(n) && n > 0 ? n : undefined;
     })(),

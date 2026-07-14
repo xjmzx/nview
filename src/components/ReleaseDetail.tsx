@@ -98,6 +98,10 @@ function MetaBar({ release }: { release: Release }) {
             release.discs && release.discs > 1 ? String(release.discs) : undefined
           }
         />
+        <MetaCell
+          label="video"
+          value={release.video ? String(release.video) : undefined}
+        />
       </dl>
     </div>
   );
