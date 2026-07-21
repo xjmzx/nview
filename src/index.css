@@ -4,8 +4,8 @@
 
 /* Theme palettes — channel triples consumed by tailwind.config.js as
    rgb(var(--c-x) / <alpha-value>). :root is the fizx.uk scheme; .theme-upleb
-   — toggled by the ndisc title button — swaps to upleb.uk. Mirrors the
-   desktop ndisc themes. */
+   — toggled by the nview title button — swaps to upleb.uk; .theme-mono is the
+   monochrome default. Mirrors the desktop ndisc themes. */
 :root {
   --c-bg: 9 13 18;
   --c-surface: 19 29 42;
@@ -86,6 +86,24 @@
   --c-mauve: 255 179 71;
   --c-physical: 74 222 128;
   --c-digital: 255 120 73;
+}
+
+/* Monochrome — the default scheme. Greys the brand chrome (accent, mauve) and
+   the digital badge so colour is reserved for a named acquisition source: the
+   SourceDot brand hues are inline hex, theme-independent, so they show through
+   in every theme. --c-physical stays green — like the desktop's --c-ok, the
+   medium is information, not decoration, and it's the only colour that keeps
+   physical distinct from the greyed digital badge. Mirrors ndisc .theme-mono. */
+.theme-mono {
+  --c-bg: 10 10 11;
+  --c-surface: 28 28 31;
+  --c-surface-hover: 44 44 48;
+  --c-fg: 240 240 243;
+  --c-muted: 122 122 128;
+  --c-accent: 232 232 236;
+  --c-mauve: 198 198 204;
+  --c-physical: 74 222 128;
+  --c-digital: 152 152 159;
 }
 
 html,

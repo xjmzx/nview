@@ -36,7 +36,7 @@ import { CurrentView } from "./components/CurrentView";
 import { useRelays } from "./hooks/useRelays";
 import { useFeed } from "./hooks/useFeed";
 
-type Theme = "fizx" | "upleb";
+type Theme = "fizx" | "upleb" | "mono";
 const THEME_KEY = "ndisc-mobile.theme";
 const VIEW_KEY = "ndisc-mobile.view";
 const PAGE_SIZE = 60;
@@ -113,13 +113,18 @@ export default function App() {
   // Colour theme — toggled by tapping the ndisc title, mirrors the desktop.
   const [theme, setTheme] = useState<Theme>(() => {
     try {
-      return localStorage.getItem(THEME_KEY) === "upleb" ? "upleb" : "fizx";
+      // Default = mono. An existing choice is respected; only a fresh install
+      // lands on mono. Mirrors the desktop ndisc default.
+      const v = localStorage.getItem(THEME_KEY);
+      return v === "upleb" || v === "fizx" ? v : "mono";
     } catch {
-      return "fizx";
+      return "mono";
     }
   });
   useEffect(() => {
-    document.documentElement.classList.toggle("theme-upleb", theme === "upleb");
+    const root = document.documentElement.classList;
+    root.toggle("theme-upleb", theme === "upleb");
+    root.toggle("theme-mono", theme === "mono");
     try {
       localStorage.setItem(THEME_KEY, theme);
     } catch {
@@ -328,7 +333,9 @@ export default function App() {
           <button
             type="button"
             onClick={() =>
-              setTheme((t) => (t === "fizx" ? "upleb" : "fizx"))
+              setTheme((t) =>
+                t === "fizx" ? "upleb" : t === "upleb" ? "mono" : "fizx",
+              )
             }
             title="Switch colour theme"
             aria-label="Switch colour theme"
