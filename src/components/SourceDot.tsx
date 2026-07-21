@@ -8,7 +8,7 @@ type Props = {
 
 /**
  * A small platform-coloured dot marking a release's origin (Bandcamp,
- * SoundCloud, Mixcloud, Wavlake, Tidal) when one is detected from its published
+ * Boomkat, Bleep, Warp, Planet Mu) when one is detected from its published
  * `source` tag. Companion to the medium glyph: shape there encodes
  * physical/digital, this dot's colour carries the origin platform. Returns null
  * when no platform is recognised. Mirrors the desktop ndisc source indicator.
