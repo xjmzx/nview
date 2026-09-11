@@ -46,33 +46,29 @@ tsconfig layout; `tsc -b` is what actually checks the app sources.
 - Both platforms ship the **same web `dist/`**, so feature parity is guaranteed
   at the web layer; only the native binaries are versioned and shipped
   separately.
-- The Android **adaptive icon** is a known open design problem: all three
-  `@capacitor/assets` sources are the same flat artwork, so the foreground is
-  full-bleed and Android's ~66% mask clips the wordmark. Fixing it means
-  splitting background/foreground layers — a design call, not a regeneration.
-- **The icon is half-migrated, and the remaining half is authoring rather than
-  export.** `public/icon.svg` and everything derived from it — `assets/*.png`,
-  `pwa-192x192`/`pwa-512x512`, the seven `icons/*.webp` — carry the current
-  Figma design (`nview-sq`, node `3373:44`): the suite's variant-2 style, a
-  large `n` as the backdrop with `view` set over it, matching ndisc, nplay,
-  nsmpl and ntree. Still on the **pre-refresh artwork**: `icon-maskable.svg`,
-  `pwa-maskable-512x512.png`, the iOS `AppIcon.appiconset` and the Android
-  `res/` set. So the web and PWA layers look like the rest of the suite and the
-  installed app icons do not.
-- **Neither leftover is a regeneration, which is why they were left.** There is
-  no maskable counterpart to `nview-sq` in the Figma file, so a maskable variant
-  has to be *drawn*, not exported — and it is the one that must survive the
-  ~66% mask above. The native sets additionally need `@capacitor/assets`
-  (declared in `package.json`, not installed) and, for iOS, alpha flattened to
-  RGB, since the App Store rejects an icon with an alpha channel.
-- **Generate nview's icons from `icon.svg`, not from a PNG master** — the
-  reverse of the rule the Tauri apps follow. Their rule exists because resvg
-  falls back to serif on live text; nview has none, its wordmark being outlined
-  paths. Meanwhile the PNG export of `nview-sq` bakes the `#E5E5E5` artboard in
-  **opaque to the corners**, so generating from it puts grey corners on every
-  size. Regenerating from the SVG keeps them transparent — spot-check a corner
-  pixel for alpha near 0, not 255, and *look at the 48px output* before
-  committing.
+- **Icons are split by platform (2026-09-11).** Figma exports each app twice:
+  rounded `nview-x2` and opaque full-bleed square `nview-sq-x2`.
+  - **Rounded**: `public/icon.svg` (favicon), `pwa-192x192`/`pwa-512x512`, and
+    the seven `icons/*.webp`.
+  - **Square**, because iOS and Android apply their own mask:
+    `public/icon-maskable.svg`, `pwa-maskable-512x512.png` (RGB),
+    `assets/icon-*.png` (the `@capacitor/assets` sources), the iOS
+    `AppIcon.appiconset` (flattened to RGB, since the App Store rejects an
+    icon with an alpha channel) and every Android `res/mipmap-*` PNG. The
+    Android set keeps the `@capacitor/assets` shapes: `ic_launcher` is a
+    rounded square inset 4%, `ic_launcher_round` a circle, and the adaptive
+    `_foreground`/`_background` layers are full-bleed.
+  - **Rasterise from the 2048px export PNGs.** The current exports have clean
+    transparent corners on the rounded variant; an earlier `nview-sq` PNG baked
+    a grey artboard into its corners, which is why this file once said
+    "SVG, not PNG". Spot-check a rounded corner pixel for alpha near 0, and
+    *look at the 48px output* before committing. `@capacitor/assets` is still
+    declared but not installed, and is not needed for this.
+- The Android **adaptive icon** is still a known open design problem: the
+  foreground and background layers are the same flat square artwork, so a
+  circle-masking launcher clips the ends of the wordmark. Fixing it means a
+  separate foreground layer that sits inside the safe zone — a design call and a
+  new Figma export, not a regeneration.
 
 ## Not here
 
