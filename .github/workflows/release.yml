@@ -126,12 +126,12 @@ jobs:
           mkdir -p artefacts
           if [ "${{ steps.signing.outputs.available }}" = "true" ]; then
             cp android/app/build/outputs/apk/release/app-release.apk \
-               "artefacts/ndisc-view-${tag}-release.apk"
+               "artefacts/nview-${tag}-release.apk"
           else
             cp android/app/build/outputs/apk/debug/app-debug.apk \
-               "artefacts/ndisc-view-${tag}-debug.apk"
+               "artefacts/nview-${tag}-debug.apk"
           fi
-          (cd dist && zip -qr "../artefacts/ndisc-view-${tag}-web.zip" .)
+          (cd dist && zip -qr "../artefacts/nview-${tag}-web.zip" .)
 
       - name: Clean up keystore
         if: always()
