@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 import { DEFAULT_RELAYS } from "../config";
-import { useRelays } from "../hooks/useRelays";
+import { useRelays, withPending } from "../hooks/useRelays";
 import { RelayListEditor } from "./RelayListEditor";
 
 type Props = { onClose: () => void };
@@ -14,10 +14,12 @@ type Props = { onClose: () => void };
 export function RelaySettings({ onClose }: Props) {
   const { relays, setRelays } = useRelays();
   const [draft, setDraft] = useState<string[]>(relays);
+  const [pending, setPending] = useState("");
+  const toSave = withPending(draft, pending);
 
   function save() {
-    if (draft.length === 0) return;
-    setRelays(draft);
+    if (toSave.length === 0) return;
+    setRelays(toSave);
     onClose();
   }
 
@@ -44,7 +46,11 @@ export function RelaySettings({ onClose }: Props) {
           </button>
         </div>
 
-        <RelayListEditor value={draft} onChange={setDraft} />
+        <RelayListEditor
+          value={draft}
+          onChange={setDraft}
+          onPendingChange={setPending}
+        />
         <p className="text-[12px] text-muted leading-relaxed">
           At least one relay. Two are helpful for coverage; three is a good
           spread.
@@ -54,7 +60,7 @@ export function RelaySettings({ onClose }: Props) {
           <button
             type="button"
             onClick={save}
-            disabled={draft.length === 0}
+            disabled={toSave.length === 0}
             className="flex-1 py-2.5 rounded-xl bg-accent text-bg font-semibold
                        transition-opacity disabled:opacity-40"
           >

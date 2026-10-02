@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Radio } from "lucide-react";
 import { DEFAULT_RELAYS } from "../config";
-import { useRelays } from "../hooks/useRelays";
+import { useRelays, withPending } from "../hooks/useRelays";
 import { RelayListEditor } from "./RelayListEditor";
 
 // First-run screen — choose the Nostr relays the viewer reads the discography
@@ -11,6 +11,7 @@ import { RelayListEditor } from "./RelayListEditor";
 export function Onboarding() {
   const { completeOnboarding } = useRelays();
   const [relays, setRelays] = useState<string[]>(() => [...DEFAULT_RELAYS]);
+  const [pending, setPending] = useState("");
 
   const n = relays.length;
   // On first run the list already IS the defaults, so a separate "use defaults"
@@ -45,7 +46,11 @@ export function Onboarding() {
         </div>
 
         <div className="flex flex-col gap-2">
-          <RelayListEditor value={relays} onChange={setRelays} />
+          <RelayListEditor
+            value={relays}
+            onChange={setRelays}
+            onPendingChange={setPending}
+          />
           <p className="px-1 text-[12px] text-muted leading-relaxed">
             At least one relay is required. Two are helpful for coverage; three
             is a good spread. The default set includes{" "}
@@ -58,7 +63,7 @@ export function Onboarding() {
           <button
             type="button"
             disabled={n === 0}
-            onClick={() => completeOnboarding(relays)}
+            onClick={() => completeOnboarding(withPending(relays, pending))}
             className="w-full py-3 rounded-xl bg-accent text-bg font-semibold
                        transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
           >

@@ -33,6 +33,14 @@ export function normaliseRelayUrl(input: string): string | null {
   }
 }
 
+// The list a Save should commit: `list` plus whatever is still sitting in the
+// add-relay box, if it is a usable URL not already listed. Typing a relay and
+// pressing Save without the "+" used to drop it without a word.
+export function withPending(list: string[], pending: string): string[] {
+  const n = normaliseRelayUrl(pending);
+  return n && !list.includes(n) ? [...list, n] : list;
+}
+
 // Clean a candidate list: normalise each entry, drop invalid, dedupe, preserve
 // order.
 function sanitiseList(list: unknown): string[] {

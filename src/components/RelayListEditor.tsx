@@ -5,14 +5,20 @@ import { normaliseRelayUrl } from "../hooks/useRelays";
 type Props = {
   value: string[];
   onChange: (next: string[]) => void;
+  /** Reports the text in the add box, so a Save can commit it (withPending). */
+  onPendingChange?: (text: string) => void;
 };
 
 // Reusable relay-list editor: add / remove wss:// URLs with light validation
 // and dedupe. Shared by first-run Onboarding and the relay settings panel.
 // Permits an empty list — the caller gates its primary action on length > 0 and
 // shows the "at least one" guidance.
-export function RelayListEditor({ value, onChange }: Props) {
-  const [draft, setDraft] = useState("");
+export function RelayListEditor({ value, onChange, onPendingChange }: Props) {
+  const [draft, setDraftState] = useState("");
+  const setDraft = (text: string) => {
+    setDraftState(text);
+    onPendingChange?.(text);
+  };
   const [err, setErr] = useState<string | null>(null);
 
   function add() {

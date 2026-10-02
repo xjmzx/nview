@@ -6,8 +6,7 @@ export const OWNER_NPUB =
 
 export const DEFAULT_RELAYS = [
   "wss://relay.fizx.uk",
-  "wss://nos.lol",
-  "wss://relay.primal.net",
+  "wss://relay.nfunc.xyz",
 ] as const;
 
 export const RELEASE_KIND = 31237;
