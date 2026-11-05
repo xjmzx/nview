@@ -13,7 +13,7 @@ discrepancy. A change to the emitted event format is a coordinated
 `release.vN+1.json` bump, never an edit to a shipped version. This file tracks
 the shared `release.vN` contract; the app's own version lives in `package.json`.
 
-## Unreleased
+## 0.1.0-beta.9 — 2026-11-05
 
 ### relay.fizx.uk is gone — relay.nfunc.xyz is the only default (2026-11-05)
 
