@@ -52,10 +52,9 @@ export function Onboarding() {
             onPendingChange={setPending}
           />
           <p className="px-1 text-[12px] text-muted leading-relaxed">
-            At least one relay is required. Two are helpful for coverage; three
-            is a good spread. The default set includes{" "}
-            <span className="font-mono text-fg/60">relay.fizx.uk</span>, where
-            this discography is published.
+            At least one relay is required. The default is{" "}
+            <span className="font-mono text-fg/60">relay.nfunc.xyz</span>, where
+            this discography is published. Others can be added for coverage.
           </p>
         </div>
 

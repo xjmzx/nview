@@ -54,12 +54,37 @@ function sanitiseList(list: unknown): string[] {
   return out;
 }
 
+// Retired relays, rewritten in saved lists to the current default.
+// relay.fizx.uk went with the fizx box on 2026-11-05 and no longer resolves.
+const RETIRED_RELAYS: Record<string, string> = {
+  "wss://relay.fizx.uk": "wss://relay.nfunc.xyz",
+};
+
+// One-shot migration of a sanitised list: each retired relay becomes its
+// replacement in the same place, duplicates dropped. Idempotent.
+export function migrateRetiredRelays(list: string[]): string[] {
+  const out: string[] = [];
+  for (const r of list) {
+    const next = RETIRED_RELAYS[r] ?? r;
+    if (!out.includes(next)) out.push(next);
+  }
+  return out;
+}
+
 function loadRelays(): string[] {
   try {
     const raw = localStorage.getItem(RELAYS_KEY);
     if (raw) {
       const clean = sanitiseList(JSON.parse(raw));
-      if (clean.length > 0) return clean;
+      const migrated = migrateRetiredRelays(clean);
+      if (migrated.join("\n") !== clean.join("\n")) {
+        try {
+          localStorage.setItem(RELAYS_KEY, JSON.stringify(migrated));
+        } catch {
+          /* ignore */
+        }
+      }
+      if (migrated.length > 0) return migrated;
     }
   } catch {
     /* ignore corrupt storage */

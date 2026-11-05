@@ -15,6 +15,12 @@ the shared `release.vN` contract; the app's own version lives in `package.json`.
 
 ## Unreleased
 
+### relay.fizx.uk is gone — relay.nfunc.xyz is the only default (2026-11-05)
+
+- The fizx box was decommissioned and `relay.fizx.uk` no longer resolves. `DEFAULT_RELAYS` is now `relay.nfunc.xyz` alone.
+- Saved relay lists are migrated on launch: a stored `relay.fizx.uk` becomes `relay.nfunc.xyz` in the same place, no duplicates, written back to storage (`migrateRetiredRelays` in `useRelays`, with tests).
+- Onboarding no longer claims the discography is published on relay.fizx.uk. README updated.
+
 ### release.v2 — 2026-11 genre round, re-vendored 2026-11-05
 
 - Source: [xjmzx/ndisc](https://github.com/xjmzx/ndisc). `schema/release.v2.json` SHA-256 `91e16cf1…` → `03f312cf…`; `.sha256` re-pinned. Additive, **not** a v3 bump.

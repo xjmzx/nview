@@ -4,10 +4,9 @@
 export const OWNER_NPUB =
   "npub1j9kztnc85ednd7ncqhe37ag0evnltn8z6wd84jfqx4ts4gn89gks0vxesa";
 
-export const DEFAULT_RELAYS = [
-  "wss://relay.fizx.uk",
-  "wss://relay.nfunc.xyz",
-] as const;
+// relay.nfunc.xyz is the suite's only default relay since relay.fizx.uk went
+// with the fizx box (2026-11-05). Saved lists are migrated in useRelays.
+export const DEFAULT_RELAYS = ["wss://relay.nfunc.xyz"] as const;
 
 export const RELEASE_KIND = 31237;
 

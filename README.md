@@ -63,7 +63,9 @@ Mac + Xcode only. There is no public iOS build yet.
 ## Configuration
 
 `src/config.ts` — the owner npub whose discography is shown, the default relay
-set (`relay.fizx.uk` + `relay.nfunc.xyz`), and the release event kind (31237).
+relay (`relay.nfunc.xyz`), and the release event kind (31237).
 Relays are chosen at first-run onboarding and in the relay settings, and saved
-on the device; an update does not change a saved list — **Reset** in the relay
-settings restores the defaults.
+on the device. An update leaves a saved list alone, with one exception: a
+retired relay (`relay.fizx.uk`, gone since 2026-11-05) is rewritten to
+`relay.nfunc.xyz` on launch. **Reset** in the relay settings restores the
+defaults.
