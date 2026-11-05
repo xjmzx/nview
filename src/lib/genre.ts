@@ -4,7 +4,7 @@
  *
  * Source of truth: schema/release.v2.json — keep this file in sync with the
  * grouped `genreSlugs` (acoustic / electronic / bridge / tertiary). The
- * grouping is semantic + palette ONLY — not a hierarchy; all 38 active slugs
+ * grouping is semantic + palette ONLY — not a hierarchy; all 41 active slugs
  * are pure peers. Validation policy is strict-but-recoverable: unknown slugs
  * are dropped silently, never thrown.
  *
@@ -50,6 +50,7 @@ export const GENRE_ELECTRONIC = [
   "garage",
   "house",
   "jungle",
+  "minimal",
   "techno",
 ] as const;
 
@@ -58,12 +59,14 @@ export const GENRE_BRIDGE = ["dub", "noise"] as const;
 
 // Tertiary / optional — cross-cutting styles.
 export const GENRE_TERTIARY = [
+  "abstract",
   "boom-bap",
   "conscious",
   "lo-fi",
   "trance",
   "trap",
   "turntablism",
+  "world",
 ] as const;
 
 // Retired slugs — never emitted; valid for legacy reads only. The four compound
@@ -137,7 +140,7 @@ export function genreColor(slug: string): string {
 
 /**
  * Apply release.v2 slot semantics on read: unknown slugs dropped, duplicates
- * collapsed to first occurrence, capped at 3 slots, order preserved.
+ * collapsed to first occurrence, capped at 5 slots (release.v2 `genreInvariants.slotCap`), order preserved.
  *
  * All slugs are pure peers — no parent/sub gating. Deprecated compound pairs
  * still parse (they're in KNOWN) so legacy events keep their genres.
@@ -146,7 +149,7 @@ export function normaliseGenres(raw: readonly string[]): GenreSlug[] {
   const out: GenreSlug[] = [];
   const seen = new Set<string>();
   for (const s of raw) {
-    if (out.length >= 3) break;
+    if (out.length >= 5) break;
     if (!isGenreSlug(s)) continue;
     if (seen.has(s)) continue;
     seen.add(s);

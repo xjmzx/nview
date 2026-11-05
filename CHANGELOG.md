@@ -1,7 +1,7 @@
 # Changelog
 
-**Contract:** `release.v2` @ `91e16cf1da861ad3116d7d15ad13d7ae32fbdf26c367e2701236cb10cfc38962`
-(2026-06b genre round — 38 active slugs + additive `discs` tag)
+**Contract:** `release.v2` @ `03f312cfc5f9b4906211de41d7d0142e34330925cd56a8808ed119d4fd34fb42`
+(2026-11 genre round — 41 active slugs, 5 genre slots + additive `discs` tag)
 
 **Feed contract:** `feed.v1` @ `077fe7a6f70831ccf7c9640185c29e0b9c289ea22a1e4283064a1803ed1ea50c`
 (kind:31239 feed-note channel — frozen 2026-06-23, pinned by `schema/feed.v1.json.sha256`)
@@ -12,6 +12,15 @@ truth: [xjmzx/ndisc](https://github.com/xjmzx/ndisc) — ndisc wins on any
 discrepancy. A change to the emitted event format is a coordinated
 `release.vN+1.json` bump, never an edit to a shipped version. This file tracks
 the shared `release.vN` contract; the app's own version lives in `package.json`.
+
+## Unreleased
+
+### release.v2 — 2026-11 genre round, re-vendored 2026-11-05
+
+- Source: [xjmzx/ndisc](https://github.com/xjmzx/ndisc). `schema/release.v2.json` SHA-256 `91e16cf1…` → `03f312cf…`; `.sha256` re-pinned. Additive, **not** a v3 bump.
+- Genre vocabulary 38 → **41 active slugs**: **`minimal`** (electronic), **`abstract`** + **`world`** (tertiary). Labels display verbatim.
+- `genreInvariants.slotCap` 3 → **5**: `normaliseGenres` now keeps up to five ordered `genre` tags (first = highest priority). `GenreDotChip` already renders every slot, so rows, cards and the detail view show up to five dots.
+- `index.css` gains theme-neutral `--c-g-{minimal,abstract,world}` hue vars.
 
 ## feed.v1 — feed-note channel (kind:31239), vendored 2026-06-23
 

@@ -20,7 +20,7 @@
 
 /* release.v2 genre colours — theme-independent (no .theme-upleb override).
    Reference via rgb(var(--c-g-<slug>) / <alpha>). Shared with ndisc + the
-   glmps viewer verbatim. 35 active slugs in four groups + the four retired
+   glmps viewer verbatim. 41 active slugs in four groups + the four retired
    compound pairs (legacy reads only, render with a slash). Restructured +
    recoloured in the 2026-06 v2 genre amendment. */
 :root {
@@ -53,6 +53,7 @@
   --c-g-footwork: 160 74 226;
   --c-g-house: 196 74 206;
   --c-g-jungle: 52 198 110;
+  --c-g-minimal: 255 240 140;
   --c-g-techno: 58 124 244;
   /* bridge */
   --c-g-dub: 22 138 104;
@@ -69,6 +70,8 @@
   --c-g-garage: 96 186 224;
   --c-g-conscious: 156 138 84;
   --c-g-turntablism: 116 120 134;
+  --c-g-abstract: 210 140 230;
+  --c-g-world: 140 170 80;
   /* deprecated compound pairs — legacy reads only, render with slash */
   --c-g-classical-folk: 232 220 195;
   --c-g-dnb-jungle: 160 39 135;

@@ -5,7 +5,7 @@ type Props = {
   className?: string;
 };
 
-// Compact pill of up-to-3 coloured dots for a release's genre slots. Returns
+// Compact pill of up-to-5 coloured dots for a release's genre slots. Returns
 // null when there are no genres. Ported from the glmps web viewer.
 export function GenreDotChip({ genres, className = "" }: Props) {
   if (genres.length === 0) return null;
