@@ -52,8 +52,8 @@ export function RelaySettings({ onClose }: Props) {
           onPendingChange={setPending}
         />
         <p className="text-[12px] text-muted leading-relaxed">
-          At least one relay. Two are helpful for coverage; three is a good
-          spread.
+          At least one relay. Add another only if it carries a mirror of this
+          discography.
         </p>
 
         <div className="flex items-center gap-2 pt-1">

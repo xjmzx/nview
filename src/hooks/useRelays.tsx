@@ -71,25 +71,86 @@ export function migrateRetiredRelays(list: string[]): string[] {
   return out;
 }
 
-function loadRelays(): string[] {
+// The two public relays the May 2026 first run seeded alongside what was then
+// relay.fizx.uk. Neither holds this discography — checked 2026-10-02, when the
+// owner key's releases were found to be unretained on both — and nothing has
+// been published to them since, so an upgraded install drops them once.
+//
+// The drop is flagged rather than recognised by value, which is the one part
+// worth not simplifying. After migrateRetiredRelays has rewritten fizx, a saved
+// list reads [nfunc, nos.lol, primal] — and that is also exactly what someone
+// gets by adding the two back on purpose. The cases are indistinguishable by
+// value, so only a flag, which separates them by time, can tell them apart:
+// prune once, record it, and anything re-added afterwards survives.
+const DROPPED_PUBLIC_RELAYS = ["wss://nos.lol", "wss://relay.primal.net"];
+const PRUNED_KEY = "ndisc-mobile.migrated.publicRelaysDropped";
+
+// Drop the seeded public relays from a sanitised list, order preserved. May
+// return an empty list; resolveStoredRelays falls back to DEFAULT_RELAYS.
+export function prunePublicRelays(list: string[]): string[] {
+  return list.filter((r) => !DROPPED_PUBLIC_RELAYS.includes(r));
+}
+
+// Everything a load decides about the stored list, kept pure so the flag
+// behaviour is testable without a DOM: given the raw stored string and whether
+// the one-shot prune has already run, which list to use and which, if any, to
+// write back. loadRelays is the storage plumbing around it.
+export function resolveStoredRelays(
+  raw: string | null,
+  alreadyPruned: boolean,
+): { relays: string[]; writeBack: string[] | null } {
+  if (!raw) return { relays: [...DEFAULT_RELAYS], writeBack: null };
+
+  let clean: string[];
   try {
-    const raw = localStorage.getItem(RELAYS_KEY);
-    if (raw) {
-      const clean = sanitiseList(JSON.parse(raw));
-      const migrated = migrateRetiredRelays(clean);
-      if (migrated.join("\n") !== clean.join("\n")) {
-        try {
-          localStorage.setItem(RELAYS_KEY, JSON.stringify(migrated));
-        } catch {
-          /* ignore */
-        }
-      }
-      if (migrated.length > 0) return migrated;
-    }
+    clean = sanitiseList(JSON.parse(raw));
   } catch {
-    /* ignore corrupt storage */
+    return { relays: [...DEFAULT_RELAYS], writeBack: null };
   }
-  return [...DEFAULT_RELAYS];
+
+  let next = migrateRetiredRelays(clean);
+  if (!alreadyPruned) next = prunePublicRelays(next);
+
+  // An empty result means the stored list held nothing but dropped relays;
+  // fall back to the default and persist it, so storage and the live list agree.
+  const relays = next.length > 0 ? next : [...DEFAULT_RELAYS];
+  const changed = relays.join("\n") !== clean.join("\n");
+  return { relays, writeBack: changed ? relays : null };
+}
+
+function loadRelays(): string[] {
+  // Default to "already pruned" when storage is unreadable: there is then no
+  // saved list to prune, and no way to record the pass if we ran it.
+  let alreadyPruned = true;
+  let raw: string | null = null;
+  try {
+    alreadyPruned = localStorage.getItem(PRUNED_KEY) === "1";
+    raw = localStorage.getItem(RELAYS_KEY);
+  } catch {
+    /* ignore */
+  }
+
+  const { relays, writeBack } = resolveStoredRelays(raw, alreadyPruned);
+
+  if (writeBack) {
+    try {
+      localStorage.setItem(RELAYS_KEY, JSON.stringify(writeBack));
+    } catch {
+      /* ignore */
+    }
+  }
+
+  // Record the pass even when nothing was stored to prune: a fresh install must
+  // not drop these relays from a list its owner builds later.
+  if (!alreadyPruned) {
+    try {
+      localStorage.setItem(PRUNED_KEY, "1");
+    } catch {
+      /* ignore */
+    }
+  }
+
+  return relays;
 }
 
 type RelaysCtx = {

@@ -15,6 +15,14 @@ the shared `release.vN` contract; the app's own version lives in `package.json`.
 
 ## Unreleased
 
+### nos.lol and relay.primal.net are dropped from saved lists (2026-11-08)
+
+- The May 2026 first run seeded three relays. Neither public relay holds this discography — checked 2026-10-02, when the owner key's releases were found to be unretained on both — so an upgraded install drops them once, leaving `relay.nfunc.xyz`.
+- Onboarding was never involved: it is gated on `ndisc-mobile.onboarded`, so an installed app never consults `DEFAULT_RELAYS` again, and beta.9's single-relay default could not reach a device. `migrateRetiredRelays` had rewritten `relay.fizx.uk` in place, which is why nfunc already sat first.
+- The drop is flagged (`ndisc-mobile.migrated.publicRelaysDropped`), not recognised by value: after that rewrite a saved list is byte-identical to one where someone added the two back deliberately, so only a flag tells the cases apart. Prune once, record it, and anything re-added afterwards survives. A list left empty by the prune falls back to the default.
+- `prunePublicRelays` is a separate function from `migrateRetiredRelays` — a retired relay has a replacement, these have none — and the load decision moved into a pure `resolveStoredRelays`, so the flag behaviour is tested without a DOM. Eleven new cases.
+- Relay copy no longer recommends two or three relays for coverage: adding one is still supported, but the suite publishes to `relay.nfunc.xyz` alone.
+
 ### release.v2 — 2026-11b genre round, re-vendored 2026-11-07
 
 - Source: [xjmzx/ndisc](https://github.com/xjmzx/ndisc) `schema/release.v2.json`. SHA-256 `03f312cf…` → `1c3169bb…`. Additive, **not** a v3 bump: every existing slug is kept.

@@ -54,7 +54,8 @@ export function Onboarding() {
           <p className="px-1 text-[12px] text-muted leading-relaxed">
             At least one relay is required. The default is{" "}
             <span className="font-mono text-fg/60">relay.nfunc.xyz</span>, where
-            this discography is published. Others can be added for coverage.
+            this discography is published. Add another only if it carries a
+            mirror.
           </p>
         </div>
 
