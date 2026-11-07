@@ -13,7 +13,7 @@ discrepancy. A change to the emitted event format is a coordinated
 `release.vN+1.json` bump, never an edit to a shipped version. This file tracks
 the shared `release.vN` contract; the app's own version lives in `package.json`.
 
-## Unreleased
+## 0.1.0-beta.10 — 2026-11-08
 
 ### nos.lol and relay.primal.net are dropped from saved lists (2026-11-08)
 
