@@ -1,7 +1,7 @@
 # Changelog
 
-**Contract:** `release.v2` @ `03f312cfc5f9b4906211de41d7d0142e34330925cd56a8808ed119d4fd34fb42`
-(2026-11 genre round — 41 active slugs, 5 genre slots + additive `discs` tag)
+**Contract:** `release.v2` @ `1c3169bbb4a9333d1597c632c1f8b1681a613712f615bbff40e348caddb32fdf`
+(2026-11b genre round — 74 active slugs in three groups, 5 genre slots + additive `discs` tag)
 
 **Feed contract:** `feed.v1` @ `077fe7a6f70831ccf7c9640185c29e0b9c289ea22a1e4283064a1803ed1ea50c`
 (kind:31239 feed-note channel — frozen 2026-06-23, pinned by `schema/feed.v1.json.sha256`)
@@ -12,6 +12,15 @@ truth: [xjmzx/ndisc](https://github.com/xjmzx/ndisc) — ndisc wins on any
 discrepancy. A change to the emitted event format is a coordinated
 `release.vN+1.json` bump, never an edit to a shipped version. This file tracks
 the shared `release.vN` contract; the app's own version lives in `package.json`.
+
+## Unreleased
+
+### release.v2 — 2026-11b genre round, re-vendored 2026-11-07
+
+- Source: [xjmzx/ndisc](https://github.com/xjmzx/ndisc) `schema/release.v2.json`. SHA-256 `03f312cf…` → `1c3169bb…`. Additive, **not** a v3 bump: every existing slug is kept.
+- Genre vocabulary 41 → **74 active slugs**, in three groups replacing acoustic / electronic / bridge / tertiary: **electronicDance**, **otherGenres** and **combining** (combining forms stack onto any genre: dub + techno, post + punk, classical + contemporary). Group names are palette + semantic only.
+- `genre.ts` swaps the four group constants for `GENRE_ELECTRONIC_DANCE` / `GENRE_OTHER` / `GENRE_COMBINING`; `GENRE_ORDER` follows. The genre filter still lists only genres present in the data.
+- `index.css` gains the 33 new `--c-g-*` triplets, same values as ndisc and glmps.
 
 ## 0.1.0-beta.9 — 2026-11-05
 
